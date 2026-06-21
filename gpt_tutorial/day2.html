@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Train an LLM from Scratch — Day 2</title>
+<style>
+  :root{
+    --bg:#0f1117; --panel:#171a23; --panel2:#1d212c; --text:#e6e9ef;
+    --muted:#9aa3b2; --accent:#7cc4ff; --accent2:#ffd479; --line:#2a2f3a;
+    --good:#7ee787; --code:#0b0d13; --warn:#ff9d7c;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--text);
+    font:16px/1.65 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;}
+  .wrap{max-width:1040px;margin:0 auto;padding:32px 20px 96px;}
+  header h1{font-size:30px;margin:0 0 6px;}
+  header .sub{color:var(--muted);margin:0 0 4px;}
+  h2{margin:48px 0 14px;font-size:22px;border-bottom:1px solid var(--line);padding-bottom:8px;}
+  h3{margin:26px 0 10px;font-size:18px;color:var(--accent2);}
+  p{margin:10px 0;}
+  a{color:var(--accent);text-decoration:none;border-bottom:1px dotted #3a4a5a;}
+  a:hover{border-bottom-style:solid;}
+  code{background:var(--code);padding:1px 6px;border-radius:5px;font-family:"SF Mono",ui-monospace,Menlo,Consolas,monospace;font-size:13.5px;color:#cfe;}
+  .formula{display:block;background:var(--code);border:1px solid var(--line);border-radius:8px;
+    padding:10px 14px;margin:10px 0;font-family:"SF Mono",ui-monospace,Menlo,Consolas,monospace;
+    font-size:14px;color:#d9e6ff;overflow-x:auto;white-space:pre;}
+  table{width:100%;border-collapse:collapse;margin:14px 0;background:var(--panel);
+    border:1px solid var(--line);border-radius:10px;overflow:hidden;}
+  th,td{text-align:left;padding:11px 13px;border-bottom:1px solid var(--line);vertical-align:top;}
+  th{background:var(--panel2);color:var(--accent);font-size:13px;text-transform:uppercase;letter-spacing:.04em;}
+  tr:last-child td{border-bottom:none;}
+  td:first-child{color:var(--muted);}
+  .glossary dt{font-weight:700;color:var(--accent2);margin-top:18px;}
+  .glossary dd{margin:4px 0 0;}
+  .glossary .refs{font-size:13px;color:var(--muted);margin-top:4px;}
+  pre.code{background:var(--code);border:1px solid var(--line);border-radius:10px;
+    padding:16px;overflow-x:auto;font-size:13px;line-height:1.5;
+    font-family:"SF Mono",ui-monospace,Menlo,Consolas,monospace;color:#d6e2f0;}
+  .note{background:var(--panel2);border-left:3px solid var(--accent);padding:10px 14px;border-radius:6px;margin:14px 0;}
+  ul{margin:8px 0;padding-left:22px;} li{margin:4px 0;}
+  footer{margin-top:60px;color:var(--muted);font-size:13px;border-top:1px solid var(--line);padding-top:16px;}
+  .back{font-size:12px;color:var(--muted);}
+  figure{margin:18px 0;background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:16px;}
+  figure svg{display:block;width:100%;height:auto;}
+  figcaption{color:var(--muted);font-size:13px;margin-top:12px;text-align:center;}
+  figure svg text{fill:#e6e9ef;font-family:-apple-system,Segoe UI,Roboto,sans-serif;font-size:13px;}
+  figure svg .mut{fill:#9aa3b2;} figure svg .acc{fill:#7cc4ff;} figure svg .acc2{fill:#ffd479;}
+  figure svg .good{fill:#7ee787;} figure svg .warn{fill:#ff9d7c;}
+  figure svg .mono{font-family:"SF Mono",ui-monospace,Menlo,Consolas,monospace;}
+  figure svg .box{fill:#1d212c;stroke:#2a2f3a;stroke-width:1.5;}
+  figure svg .boxa{fill:#23314a;stroke:#3a5b86;stroke-width:1.5;}
+  figure svg .boxg{fill:#1d2a22;stroke:#2f6f49;stroke-width:1.5;}
+  figure svg .edge{stroke:#7cc4ff;stroke-width:1.8;fill:none;}
+  figure svg .edged{stroke:#ffd479;stroke-width:1.6;fill:none;stroke-dasharray:5 4;}
+  figure svg .axis{stroke:#3a4150;stroke-width:1.2;}
+</style>
+<link rel="stylesheet" href="assets/app.css">
+</head>
+<body data-page="day2">
+<svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>
+  <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+    <path d="M0,0 L10,5 L0,10 z" fill="#7cc4ff"/></marker>
+  <marker id="arrowy" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+    <path d="M0,0 L10,5 L0,10 z" fill="#ffd479"/></marker>
+  <marker id="arrowg" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+    <path d="M0,0 L10,5 L0,10 z" fill="#7ee787"/></marker>
+</defs></svg>
+
+<div class="wrap">
+
+<header>
+  <h1>🧠 Train an LLM from Scratch — Day 2 <span style="font-size:15px;color:var(--accent2)">· The Block &amp; Training</span></h1>
+  <p class="sub">Positional embeddings, residuals &amp; LayerNorm, multi-head attention, the optimizer, schedules, and sampling.</p>
+  <p class="sub">Interactive widgets and diagrams throughout. Your notes carry over from Day 1.</p>
+</header>
+
+<nav class="topnav">
+  <a href="day1.html">← Day 1 · Foundations &amp; Attention</a>
+  <a href="day2.html" class="active">Day 2 · The Block &amp; Training</a>
+</nav>
+<div id="progress-wrap">
+  <div id="progress-track"><div id="progress-bar"></div></div>
+  <div id="progress-label"></div>
+</div>
+
+<!-- ============================ RECAP ============================ -->
+<h2 id="recap">1. Where we are</h2>
+<p>
+Day 1 built the spine: predict <code>P(next token | previous)</code>, via embeddings → <a href="day1.html#attention">self-attention</a> → softmax → cross-entropy, trained by gradient descent. Today we fill in the rest of a real transformer block and the machinery that actually trains it well: <b>position</b>, <b>residuals</b>, <b>LayerNorm</b>, <b>multiple heads</b>, the <b>feed-forward</b> net, the <b>Adam</b> optimizer, the <b>learning-rate schedule</b>, and how we <b>generate</b> text.
+</p>
+
+<!-- ============================ POSITIONAL ============================ -->
+<h2 id="position">2. Positional embeddings — giving order to a "bag of tokens"</h2>
+<p>
+Attention is <em>permutation-invariant</em>: by itself it treats the input as an unordered set — "dog bites man" and "man bites dog" would look identical! So we <b>add</b> a learned position vector to each token embedding, encoding <em>where</em> each token sits:
+</p>
+<span class="formula">x = TokenEmbedding[id] + PositionEmbedding[pos]</span>
+
+<figure>
+<svg viewBox="0 0 720 230" role="img" aria-label="Positional embeddings added to token embeddings">
+  <text x="90" y="30" text-anchor="middle" class="mut">token emb</text>
+  <text x="90" y="200" text-anchor="middle" class="mut">"The"  "cat"  "sat"</text>
+  <text x="360" y="30" text-anchor="middle" class="mut">position emb</text>
+  <text x="360" y="200" text-anchor="middle" class="mut">pos 0   pos 1   pos 2</text>
+  <text x="630" y="30" text-anchor="middle" class="mut">input to block</text>
+
+  <!-- token vectors -->
+  <g class="mono" font-size="11" text-anchor="middle">
+    <rect class="boxa" x="40"  y="50" width="34" height="120"/>
+    <rect class="boxa" x="84"  y="50" width="34" height="120"/>
+    <rect class="boxa" x="128" y="50" width="34" height="120"/>
+  </g>
+  <text x="190" y="115" text-anchor="middle" class="acc2 mono" font-size="20">+</text>
+  <!-- position vectors -->
+  <g class="mono" font-size="11" text-anchor="middle">
+    <rect class="box" x="310" y="50" width="34" height="120"/>
+    <rect class="box" x="354" y="50" width="34" height="120"/>
+    <rect class="box" x="398" y="50" width="34" height="120"/>
+  </g>
+  <text x="470" y="115" text-anchor="middle" class="acc2 mono" font-size="20">=</text>
+  <!-- result -->
+  <g class="mono" font-size="11" text-anchor="middle">
+    <rect class="boxg" x="560" y="50" width="34" height="120"/>
+    <rect class="boxg" x="604" y="50" width="34" height="120"/>
+    <rect class="boxg" x="648" y="50" width="34" height="120"/>
+  </g>
+</svg>
+<figcaption>Figure 1 — Each token vector gets its position vector added, so identical words at different positions become distinguishable.</figcaption>
+</figure>
+<p class="note"><b>Learned vs sinusoidal.</b> The original transformer used fixed <em>sinusoidal</em> functions of position; GPT-2 and our code use a <em>learned</em> <code>nn.Embedding(block_size, d)</code>. Modern models often use <b>RoPE</b> (rotary) which rotates Q/K by position — better at generalizing to longer contexts. All solve the same problem: inject order.</p>
+
+<!-- ============================ RESIDUALS ============================ -->
+<h2 id="residual">3. Residual connections — the gradient highway</h2>
+<p>
+Each sub-layer computes <code>x + f(x)</code> instead of just <code>f(x)</code>. This "skip connection" lets the input flow straight through, so very deep stacks stay trainable: during <a href="day1.html#g-backprop">backprop</a> the gradient has an unbroken path back to early layers (it doesn't have to squeeze through every transformation), which prevents <b>vanishing gradients</b>.
+</p>
+<span class="formula">x = x + Attention(LayerNorm(x))
+x = x + FeedForward(LayerNorm(x))</span>
+
+<figure>
+<svg viewBox="0 0 640 200" role="img" aria-label="Residual connection gradient highway">
+  <rect class="boxa" x="30" y="80" width="60" height="40" rx="7"/><text x="60" y="105" text-anchor="middle" class="mono">x</text>
+  <rect class="box"  x="200" y="80" width="90" height="40" rx="7"/><text x="245" y="105" text-anchor="middle" class="mono" font-size="12">f(x)</text>
+  <circle cx="400" cy="100" r="18" class="boxg"/><text x="400" y="105" text-anchor="middle" class="good mono">+</text>
+  <rect class="boxg" x="500" y="80" width="100" height="40" rx="7"/><text x="550" y="105" text-anchor="middle" class="mono good">x + f(x)</text>
+  <!-- main path -->
+  <path class="edge" d="M90,100 H200" marker-end="url(#arrow)"/>
+  <path class="edge" d="M290,100 H382" marker-end="url(#arrow)"/>
+  <path class="edge" d="M418,100 H500" marker-end="url(#arrow)"/>
+  <!-- skip highway -->
+  <path class="edged" d="M60,80 V30 H400 V82" marker-end="url(#arrowy)"/>
+  <text x="230" y="22" class="acc2" font-size="12">skip connection — gradients flow straight back ⟵</text>
+</svg>
+<figcaption>Figure 2 — The dashed "highway" carries the input (and gradients) around the transformation. Without it, 12+ stacked layers barely train.</figcaption>
+</figure>
+
+<!-- ============================ LAYERNORM ============================ -->
+<h2 id="layernorm">4. LayerNorm — keeping activations on a sane scale</h2>
+<p>
+As signals pass through many layers their scale can drift, destabilizing training. <a href="day1.html#g-layernorm">LayerNorm</a> normalizes each token's vector to mean 0 and variance 1 (across its features), then applies a learned scale <code>γ</code> and shift <code>β</code> so the network can still choose the scale it wants:
+</p>
+<span class="formula">LN(x) = γ · (x − μ) / √(σ² + ε) + β
+        μ = mean(x),  σ² = var(x)   over the feature dimension</span>
+<p class="note">We apply LN <em>before</em> each sub-layer ("pre-norm", as in GPT-2). It's like auto-adjusting the volume on every layer so nothing blows out or fades to silence.</p>
+
+<!-- ============================ MULTI-HEAD ============================ -->
+<h2 id="multihead">5. Multi-head attention — several "spotlights" at once</h2>
+<p>
+One attention head can only focus one way. <b>Multi-head</b> attention runs <code>h</code> heads in parallel, each with its own smaller Q/K/V, so different heads can specialize — one might track the subject of a verb, another nearby punctuation, another long-range references. Their outputs are concatenated and projected back:
+</p>
+<span class="formula">head_i = softmax(Q_i·K_iᵀ / √d_k) · V_i
+MultiHead = Concat(head_1, …, head_h) · W_O      (d_k = d / h)</span>
+
+<figure>
+<svg viewBox="0 0 600 250" role="img" aria-label="Multi-head attention">
+  <rect class="boxa" x="250" y="200" width="100" height="34" rx="7"/><text x="300" y="222" text-anchor="middle" class="mono">x</text>
+  <rect class="box" x="60"  y="110" width="100" height="40" rx="7"/><text x="110" y="134" text-anchor="middle" class="mono" font-size="11">head 1 (Q₁K₁V₁)</text>
+  <rect class="box" x="250" y="110" width="100" height="40" rx="7"/><text x="300" y="134" text-anchor="middle" class="mono" font-size="11">head 2 (Q₂K₂V₂)</text>
+  <rect class="box" x="440" y="110" width="100" height="40" rx="7"/><text x="490" y="134" text-anchor="middle" class="mono" font-size="11">head h (QₕKₕVₕ)</text>
+  <path class="edge" d="M280,200 L130,150" marker-end="url(#arrow)"/>
+  <path class="edge" d="M300,200 L300,150" marker-end="url(#arrow)"/>
+  <path class="edge" d="M320,200 L470,150" marker-end="url(#arrow)"/>
+  <rect class="box" x="200" y="44" width="200" height="40" rx="7"/><text x="300" y="68" text-anchor="middle" class="mono" font-size="12">Concat → Linear W_O</text>
+  <path class="edge" d="M110,110 L250,84" marker-end="url(#arrow)"/>
+  <path class="edge" d="M300,110 L300,84" marker-end="url(#arrow)"/>
+  <path class="edge" d="M490,110 L350,84" marker-end="url(#arrow)"/>
+  <rect class="boxg" x="250" y="6" width="100" height="30" rx="7"/><text x="300" y="26" text-anchor="middle" class="mono good">output</text>
+  <path class="edge" d="M300,44 V36" marker-end="url(#arrow)"/>
+</svg>
+<figcaption>Figure 3 — h heads attend in parallel, each on a d/h-sized slice, then concat + project. Same total compute as one big head, but more expressive.</figcaption>
+</figure>
+
+<div class="widget" id="w-attn"></div>
+
+<!-- ============================ FFN ============================ -->
+<h2 id="ffn">6. The feed-forward network — per-token "thinking"</h2>
+<p>
+Attention <em>moves information between</em> tokens; the <a href="day1.html#g-ffn">feed-forward</a> network then <em>processes</em> each token independently. It's a 2-layer MLP that expands to 4× width, applies a non-linearity, and projects back — this is where a lot of the model's raw "knowledge" capacity lives:
+</p>
+<span class="formula">FFN(x) = Linear(4d → d) ( GELU ( Linear(d → 4d)(x) ) )</span>
+
+<!-- ============================ OPTIMIZER ============================ -->
+<h2 id="optimizer">7. The optimizer — from SGD to Adam</h2>
+<p>Plain <a href="day1.html#g-gd">gradient descent</a> uses the same step rule for every parameter. <a href="day1.html#g-adam">Adam</a> improves it with two running averages, giving each parameter its own adaptive step:</p>
+<span class="formula">m ← β₁·m + (1−β₁)·g            # momentum: smoothed gradient direction
+v ← β₂·v + (1−β₂)·g²           # variance: typical magnitude of this param's grad
+θ ← θ − η · m̂ / (√v̂ + ε)       # big steps where grads are small/steady, small where noisy</span>
+<ul>
+  <li><b>Momentum (m):</b> averages recent gradients → smooths out noise, powers through flat spots.</li>
+  <li><b>Per-parameter scaling (v):</b> divides by the gradient's typical size → every parameter learns at a sensible rate.</li>
+  <li><b>AdamW</b> adds decoupled <em>weight decay</em> (gently shrinks weights → regularization).</li>
+</ul>
+
+<!-- ============================ LR SCHEDULE ============================ -->
+<h2 id="schedule">8. Learning-rate schedule — warmup then decay</h2>
+<p>A constant learning rate is rarely best. We <b>warm up</b> from ~0 (so early, noisy gradients don't blow up the freshly-random weights), then <b>cosine-decay</b> toward a small floor (to settle precisely into a minimum). Play with it:</p>
+<div class="widget" id="w-lr"></div>
+
+<!-- ============================ GENERATION ============================ -->
+<h2 id="generation">9. Generation — turning probabilities into text</h2>
+<p>To generate, we feed the context, take the last position's <a href="day1.html#g-logits">logits</a>, and pick a next token. <em>How</em> we pick controls the style:</p>
+<table>
+  <thead><tr><th>Method</th><th>What it does</th><th>Effect</th></tr></thead>
+  <tbody>
+    <tr><td>Greedy (argmax)</td><td>Always take the most likely token.</td><td>Safe but repetitive/dull.</td></tr>
+    <tr><td>Temperature</td><td>Divide logits by T before softmax.</td><td>Low T → focused; high T → random/creative.</td></tr>
+    <tr><td>Top-k</td><td>Keep only the k most likely; sample among them.</td><td>Cuts off the long tail of nonsense tokens.</td></tr>
+    <tr><td>Top-p (nucleus)</td><td>Keep the smallest set whose probs sum to p.</td><td>Adaptive cutoff; popular default.</td></tr>
+  </tbody>
+</table>
+<div class="widget" id="w-sampling"></div>
+
+<!-- ============================ TRAINING LOOP ============================ -->
+<h2 id="loop">10. The training loop &amp; what to expect</h2>
+<pre class="code">for step in range(max_iters):
+    xb, yb = get_batch("train")        # random chunks; yb = xb shifted by 1
+    logits, loss = model(xb, yb)       # forward pass → cross-entropy loss
+    optimizer.zero_grad()
+    loss.backward()                    # backprop: compute every gradient
+    optimizer.step()                   # AdamW update: θ ← θ − η·m̂/(√v̂+ε)</pre>
+<ul>
+  <li><b>Initial loss ≈ <code>log(|V|)</code></b> (~4.17 for ~65 chars) — the random-guess baseline. If it's wildly off, something's wrong.</li>
+  <li>Loss should <b>fall steadily</b>; watch train vs val to spot overfitting (val stops improving while train keeps dropping).</li>
+  <li>Generated text evolves: <span class="mono">random chars → letter clusters → real words → phrase-like</span> structure.</li>
+</ul>
+
+<!-- ============================ DATA ============================ -->
+<h2 id="data">11. Good data to train on</h2>
+<p>Fetch a corpus with <code>python get_data.py &lt;name&gt;</code> (details &amp; bigger options in <a href="DATA.md">DATA.md</a>):</p>
+<table>
+  <thead><tr><th>Dataset</th><th>Command</th><th>Why</th></tr></thead>
+  <tbody>
+    <tr><td>Tiny Shakespeare</td><td><code>get_data.py shakespeare</code></td><td>Fast, classic first run (~1 MB).</td></tr>
+    <tr><td>TinyStories</td><td><code>get_data.py tinystories</code></td><td><b>Tiny models write coherent English</b> — most satisfying result (~20 MB).</td></tr>
+    <tr><td>Sherlock Holmes</td><td><code>get_data.py sherlock</code></td><td>Richer vocabulary, narrative prose.</td></tr>
+    <tr><td>Your own</td><td>drop <code>input.txt</code></td><td>Any UTF-8 text — notes, a book, code.</td></tr>
+  </tbody>
+</table>
+
+<!-- ============================ NOTES ============================ -->
+<div id="notes"></div>
+
+<!-- ============================ GLOSSARY ============================ -->
+<h2 id="glossary">12. Day-2 glossary &amp; references</h2>
+<dl class="glossary">
+  <dt id="g-pos">Positional embedding</dt>
+  <dd>A vector added to each token encoding its position, since attention is otherwise order-blind. Learned, sinusoidal, or rotary (RoPE).
+    <div class="refs"><a href="https://arxiv.org/abs/1706.03762">Vaswani et al. 2017</a> · <a href="https://arxiv.org/abs/2104.09864">RoPE</a></div></dd>
+  <dt id="g-res">Residual connection</dt>
+  <dd><code>x + f(x)</code> skip connection; keeps gradients flowing through deep stacks.
+    <div class="refs"><a href="https://arxiv.org/abs/1512.03385">He et al. 2015 (ResNet)</a></div></dd>
+  <dt id="g-ln">LayerNorm</dt>
+  <dd>Normalize each token vector to mean 0 / var 1 over features, then learned scale+shift.
+    <div class="refs"><a href="https://arxiv.org/abs/1607.06450">Ba et al. 2016</a></div></dd>
+  <dt id="g-mh">Multi-head attention</dt>
+  <dd>Several attention heads on d/h-sized slices in parallel, concatenated and projected — lets heads specialize.
+    <div class="refs"><a href="https://arxiv.org/abs/1706.03762">Vaswani et al., §3.2.2</a></div></dd>
+  <dt id="g-gelu">GELU</dt>
+  <dd>Smooth non-linearity used in the feed-forward net (a softer ReLU).
+    <div class="refs"><a href="https://arxiv.org/abs/1606.08415">Hendrycks &amp; Gimpel 2016</a></div></dd>
+  <dt id="g-adamw">Adam / AdamW</dt>
+  <dd>Adaptive optimizer using momentum (m) and per-parameter variance (v); AdamW decouples weight decay.
+    <div class="refs"><a href="https://arxiv.org/abs/1412.6980">Adam</a> · <a href="https://arxiv.org/abs/1711.05101">AdamW</a></div></dd>
+  <dt id="g-warmup">Warmup + cosine decay</dt>
+  <dd>Ramp the learning rate up, then cosine-decay it to a floor — stabilises early training, refines late.
+    <div class="refs"><a href="https://arxiv.org/abs/1608.03983">SGDR (cosine)</a></div></dd>
+  <dt id="g-sampling">Temperature / top-k / top-p</dt>
+  <dd>Knobs controlling randomness when sampling the next token from the logits.
+    <div class="refs"><a href="https://arxiv.org/abs/1904.09751">Holtzman et al. 2019 (top-p)</a></div></dd>
+</dl>
+
+<footer>
+  Day 2 of "Train an LLM from scratch." Diagrams are hand-authored inline SVG; widgets are vanilla JS (offline-friendly).
+  Code &amp; architecture follow <a href="https://github.com/karpathy/nanoGPT">nanoGPT</a> (MIT). Generated 2026-06-21.
+</footer>
+
+</div>
+<script src="assets/app.js"></script>
+</body>
+</html>

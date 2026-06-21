@@ -1,0 +1,52 @@
+/* Shared interactive styles for the GPT tutorial (widgets, notes, progress, nav).
+   Base page styles live inline in each dayN.html; this file adds the dynamic bits. */
+
+.topnav{display:flex;gap:10px;margin:0 0 14px;flex-wrap:wrap}
+.topnav a{background:#1d212c;border:1px solid #2a2f3a;border-radius:8px;padding:6px 14px;border-bottom:1px solid #2a2f3a}
+.topnav a.active{background:#23314a;color:#ffd479}
+
+#progress-wrap{margin:6px 0 18px}
+#progress-track{height:8px;background:#1d212c;border-radius:6px;overflow:hidden;border:1px solid #2a2f3a}
+#progress-bar{height:100%;width:0;background:linear-gradient(90deg,#7cc4ff,#7ee787);transition:width .3s}
+#progress-label{font-size:12px;color:#9aa3b2;margin-top:4px}
+
+h2 .prog{float:right;font-size:12px;color:#9aa3b2;font-weight:400;text-transform:none;
+  letter-spacing:0;cursor:pointer;display:inline-flex;align-items:center;gap:5px}
+h2 .prog input{cursor:pointer}
+
+.widget{background:#13161e;border:1px solid #2a2f3a;border-left:3px solid #ffd479;
+  border-radius:10px;padding:14px 16px;margin:16px 0}
+.widget h4{margin:0 0 6px;color:#ffd479;font-size:15px}
+.muted{color:#9aa3b2}
+
+.sliders{display:flex;flex-wrap:wrap;gap:14px;align-items:center;margin-top:6px}
+.sliders label{display:flex;flex-direction:column;font-size:12px;color:#cfe;gap:3px;min-width:120px}
+.sliders input[type=range]{width:150px;accent-color:#7cc4ff}
+.sliders button{background:#23314a;color:#e6e9ef;border:1px solid #3a5b86;border-radius:7px;
+  padding:6px 12px;cursor:pointer}
+.sliders button:hover{background:#2c3f5e}
+
+.bars{display:flex;gap:18px;align-items:flex-end;height:150px;margin-top:14px;padding-left:6px}
+.bars.wide{gap:9px}
+.bar{display:flex;flex-direction:column;align-items:center;justify-content:flex-end;gap:4px;font-size:12px}
+.bar-fill{width:42px;background:linear-gradient(180deg,#7ee787,#3a8f5a);border-radius:5px 5px 0 0;
+  min-height:2px;transition:height .12s}
+.bars.wide .bar-fill{width:30px}
+.bar-fill.zero{background:#2a2f3a}
+.bar-lbl{font-family:"SF Mono",ui-monospace,Menlo,Consolas,monospace;color:#e6e9ef}
+
+canvas{background:#0b0d13;border:1px solid #2a2f3a;border-radius:8px;margin-top:12px;max-width:100%;height:auto}
+
+#notes{background:#13161e;border:1px solid #2a2f3a;border-radius:10px;padding:16px 18px;margin:26px 0}
+#notes h3{margin:0 0 6px;color:#ffd479}
+.note-input{display:flex;gap:8px;margin:10px 0}
+.note-input input{flex:1;background:#0b0d13;border:1px solid #2a2f3a;border-radius:7px;padding:8px 10px;color:#e6e9ef}
+.note-input button,.note-actions button{background:#23314a;color:#e6e9ef;border:1px solid #3a5b86;
+  border-radius:7px;padding:8px 12px;cursor:pointer}
+.note-actions{display:flex;gap:8px;margin-top:10px;flex-wrap:wrap}
+.note-actions .danger{border-color:#6f2f2f;background:#2a1717}
+.note-item{display:flex;justify-content:space-between;gap:10px;background:#0b0d13;border:1px solid #2a2f3a;
+  border-radius:7px;padding:8px 10px;margin:6px 0}
+.note-page{color:#7cc4ff;font-family:monospace;font-size:12px}
+.note-time{color:#9aa3b2;font-size:11px;margin-top:3px}
+.note-del{background:transparent;border:none;color:#ff9d7c;cursor:pointer;font-size:14px}

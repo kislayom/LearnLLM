@@ -59,8 +59,9 @@
   figure svg .axis{stroke:#3a4150;stroke-width:1.2;}
   figure svg .grid{stroke:#222734;stroke-width:1;}
 </style>
+<link rel="stylesheet" href="assets/app.css">
 </head>
-<body>
+<body data-page="day1">
 <!-- shared SVG defs: arrowheads + patterns -->
 <svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>
   <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
@@ -80,6 +81,15 @@
   <p class="sub">Foundations &amp; self-attention — explained with diagrams, graphs and the maths behind them.</p>
   <p class="sub">Every jargon term links to its <a href="#glossary">definition + references</a>. Runnable code is at the <a href="#code">bottom</a>.</p>
 </header>
+
+<nav class="topnav">
+  <a href="day1.html" class="active">Day 1 · Foundations &amp; Attention</a>
+  <a href="day2.html">Day 2 · The Block &amp; Training →</a>
+</nav>
+<div id="progress-wrap">
+  <div id="progress-track"><div id="progress-bar"></div></div>
+  <div id="progress-label"></div>
+</div>
 
 <!-- ============================ BIG PICTURE ============================ -->
 <h2 id="bigpicture">1. The big picture — one function, predicting the next token</h2>
@@ -242,6 +252,7 @@ Computers do maths on numbers, not letters. <a href="#g-token">Tokenization</a> 
 </svg>
 <figcaption>Figure 3 — A small lead in the logit (2.0 vs 1.0) becomes a big lead in probability (0.66 vs 0.24). That sharpening is softmax's superpower.</figcaption>
 </figure>
+<div class="widget" id="w-softmax"></div>
 
 <!-- ============================ CROSS ENTROPY ============================ -->
 <h2 id="loss">4. The loss — cross-entropy (how wrong are we?)</h2>
@@ -300,6 +311,7 @@ Computers do maths on numbers, not letters. <a href="#g-token">Tokenization</a> 
 </svg>
 <figcaption>Figure 5 — Gradient descent rolls the parameters downhill. Too large η overshoots the valley; too small crawls. This is the knob you'll feel most.</figcaption>
 </figure>
+<div class="widget" id="w-gd"></div>
 
 <!-- ============================ ATTENTION ============================ -->
 <h2 id="attention">6. Self-attention — the heart of the transformer</h2>
@@ -349,6 +361,7 @@ Each token builds three vectors via learned projections: a <a href="#g-qkv">Quer
 </svg>
 <figcaption>Figure 6 — Attention dataflow. <code>Q·Kᵀ</code> scores every pair, <code>√d</code> keeps it trainable, the mask hides the future, softmax makes weights, and <code>·V</code> blends the information.</figcaption>
 </figure>
+<div class="widget" id="w-attn"></div>
 
 <h3 id="why-sqrtd">Why divide by √d?</h3>
 <p>A <a href="#g-dot">dot product</a> sums <code>d</code> terms, so its magnitude grows with <code>d</code>. Large scores push <a href="#g-softmax">softmax</a> into a near one-hot, flat region where gradients vanish (nothing learns). Dividing by <span class="mono">√d</span> normalizes the variance back to ~1, keeping softmax "soft" and trainable.</p>
@@ -594,6 +607,9 @@ Each token builds three vectors via learned projections: a <a href="#g-qkv">Quer
     <div class="refs"><a href="https://arxiv.org/abs/1607.06450">Ba et al. 2016</a></div></dd>
 </dl>
 
+<!-- ============================ NOTES ============================ -->
+<div id="notes"></div>
+
 <!-- ============================ LEARN MORE ============================ -->
 <h2 id="learn-more">11. Best places to learn this</h2>
 <ul>
@@ -651,5 +667,6 @@ class Block(nn.Module):                       # one transformer block
 </footer>
 
 </div>
+<script src="assets/app.js"></script>
 </body>
 </html>
