@@ -3,12 +3,12 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Train an LLM from Scratch — Day 1</title>
+<title>Train an LLM from Scratch — Day 1 (Visual)</title>
 <style>
   :root{
     --bg:#0f1117; --panel:#171a23; --panel2:#1d212c; --text:#e6e9ef;
     --muted:#9aa3b2; --accent:#7cc4ff; --accent2:#ffd479; --line:#2a2f3a;
-    --good:#7ee787; --code:#0b0d13;
+    --good:#7ee787; --code:#0b0d13; --warn:#ff9d7c;
   }
   *{box-sizing:border-box}
   body{margin:0;background:var(--bg);color:var(--text);
@@ -16,7 +16,7 @@
   .wrap{max-width:1040px;margin:0 auto;padding:32px 20px 96px;}
   header h1{font-size:30px;margin:0 0 6px;}
   header .sub{color:var(--muted);margin:0 0 4px;}
-  h2{margin:44px 0 14px;font-size:22px;border-bottom:1px solid var(--line);padding-bottom:8px;}
+  h2{margin:48px 0 14px;font-size:22px;border-bottom:1px solid var(--line);padding-bottom:8px;}
   h3{margin:26px 0 10px;font-size:18px;color:var(--accent2);}
   p{margin:10px 0;}
   a{color:var(--accent);text-decoration:none;border-bottom:1px dotted #3a4a5a;}
@@ -31,7 +31,6 @@
   th{background:var(--panel2);color:var(--accent);font-size:13px;text-transform:uppercase;letter-spacing:.04em;}
   tr:last-child td{border-bottom:none;}
   td:first-child{color:var(--muted);font-variant-numeric:tabular-nums;width:34px;}
-  .tag{display:inline-block;background:#23314a;color:#bcd;border-radius:6px;padding:1px 7px;font-size:12px;}
   .glossary dt{font-weight:700;color:var(--accent2);margin-top:18px;}
   .glossary dd{margin:4px 0 0;color:var(--text);}
   .glossary .refs{font-size:13px;color:var(--muted);margin-top:4px;}
@@ -40,410 +39,615 @@
     font-family:"SF Mono",ui-monospace,Menlo,Consolas,monospace;color:#d6e2f0;}
   .note{background:var(--panel2);border-left:3px solid var(--accent);padding:10px 14px;border-radius:6px;margin:14px 0;}
   .ok{color:var(--good);}
-  ul{margin:8px 0 8px 0;padding-left:22px;}
-  li{margin:4px 0;}
+  ul{margin:8px 0;padding-left:22px;} li{margin:4px 0;}
   footer{margin-top:60px;color:var(--muted);font-size:13px;border-top:1px solid var(--line);padding-top:16px;}
   .back{font-size:12px;color:var(--muted);}
+  /* figures / svg */
+  figure{margin:18px 0;background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:16px;}
+  figure svg{display:block;width:100%;height:auto;}
+  figcaption{color:var(--muted);font-size:13px;margin-top:12px;text-align:center;}
+  figure svg text{fill:#e6e9ef;font-family:-apple-system,Segoe UI,Roboto,sans-serif;font-size:13px;}
+  figure svg .mut{fill:#9aa3b2;}
+  figure svg .acc{fill:#7cc4ff;} figure svg .acc2{fill:#ffd479;}
+  figure svg .good{fill:#7ee787;} figure svg .warn{fill:#ff9d7c;}
+  figure svg .mono{font-family:"SF Mono",ui-monospace,Menlo,Consolas,monospace;}
+  figure svg .box{fill:#1d212c;stroke:#2a2f3a;stroke-width:1.5;}
+  figure svg .boxa{fill:#23314a;stroke:#3a5b86;stroke-width:1.5;}
+  figure svg .boxg{fill:#1d2a22;stroke:#2f6f49;stroke-width:1.5;}
+  figure svg .edge{stroke:#7cc4ff;stroke-width:1.8;fill:none;}
+  figure svg .edged{stroke:#ffd479;stroke-width:1.6;fill:none;stroke-dasharray:5 4;}
+  figure svg .axis{stroke:#3a4150;stroke-width:1.2;}
+  figure svg .grid{stroke:#222734;stroke-width:1;}
 </style>
 </head>
 <body>
+<!-- shared SVG defs: arrowheads + patterns -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>
+  <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+    <path d="M0,0 L10,5 L0,10 z" fill="#7cc4ff"/></marker>
+  <marker id="arrowy" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+    <path d="M0,0 L10,5 L0,10 z" fill="#ffd479"/></marker>
+  <marker id="arrowg" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+    <path d="M0,0 L10,5 L0,10 z" fill="#7ee787"/></marker>
+  <pattern id="hatch" width="7" height="7" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
+    <line x1="0" y1="0" x2="0" y2="7" stroke="#33384a" stroke-width="2.4"/></pattern>
+</defs></svg>
+
 <div class="wrap">
 
 <header>
-  <h1>🧠 Train an LLM from Scratch — Day 1</h1>
-  <p class="sub">Foundations &amp; the attention mechanism — theory and the maths behind it.</p>
-  <p class="sub">Every jargon term links to its <a href="#glossary">definition in the glossary</a>. The runnable code is at the <a href="#code">bottom</a>.</p>
+  <h1>🧠 Train an LLM from Scratch — Day 1 <span style="font-size:15px;color:var(--accent2)">· Visual Edition</span></h1>
+  <p class="sub">Foundations &amp; self-attention — explained with diagrams, graphs and the maths behind them.</p>
+  <p class="sub">Every jargon term links to its <a href="#glossary">definition + references</a>. Runnable code is at the <a href="#code">bottom</a>.</p>
 </header>
 
-<!-- ===================================================================== -->
-<h2 id="bigpicture">1. The big picture</h2>
+<!-- ============================ BIG PICTURE ============================ -->
+<h2 id="bigpicture">1. The big picture — one function, predicting the next token</h2>
 <p>
-A large language model is one function that estimates
+An LLM is a single function estimating
 <span class="formula">P( next token | all previous tokens )</span>
-Using the <a href="#g-chainrule">chain rule of probability</a>, that single conditional is enough to score or generate any text. This makes GPT an
-<a href="#g-autoregressive">autoregressive</a> model. Everything else —
-<a href="#g-embedding">embeddings</a>, <a href="#g-attention">attention</a>,
-the <a href="#g-crossentropy">loss</a> — exists to make that one prediction accurate.
+Run it repeatedly — feed its own output back in — and it generates text. That feedback loop is what <a href="#g-autoregressive">autoregressive</a> means. Here is the whole pipeline we'll build:
 </p>
 
-<!-- ===================================================================== -->
-<h2 id="concepts">2. Day-1 concept map</h2>
+<figure>
+<svg viewBox="0 0 720 560" role="img" aria-label="LLM pipeline flowchart">
+  <!-- boxes -->
+  <rect class="boxa" x="200" y="14"  width="320" height="42" rx="8"/>
+  <text x="360" y="40" text-anchor="middle">Input text &#8201;&#8201; <tspan class="mono acc2">"The cat sa"</tspan></text>
+
+  <rect class="box"  x="200" y="86"  width="320" height="42" rx="8"/>
+  <text x="360" y="105" text-anchor="middle"><a href="#g-token">Tokenize</a> → integer ids</text>
+  <text x="360" y="121" text-anchor="middle" class="mono mut" font-size="12">[20, 8, 5, 0, 3, 1, 20, 0, 19, 1]</text>
+
+  <rect class="box"  x="200" y="158" width="320" height="42" rx="8"/>
+  <text x="360" y="177" text-anchor="middle"><a href="#g-embedding">Token embedding</a> + position</text>
+  <text x="360" y="193" text-anchor="middle" class="mut" font-size="12">each id → a learned vector (dim d)</text>
+
+  <rect class="box"  x="200" y="230" width="320" height="64" rx="8"/>
+  <text x="360" y="252" text-anchor="middle" class="acc2">N × Transformer Block</text>
+  <text x="360" y="270" text-anchor="middle" font-size="12"><a href="#g-attention">Self-Attention</a> → <a href="#g-ffn">Feed-Forward</a></text>
+  <text x="360" y="286" text-anchor="middle" class="mut" font-size="12">tokens exchange &amp; refine information</text>
+
+  <rect class="box"  x="200" y="324" width="320" height="42" rx="8"/>
+  <text x="360" y="343" text-anchor="middle">LayerNorm + Linear head → <a href="#g-logits">logits</a></text>
+  <text x="360" y="359" text-anchor="middle" class="mut" font-size="12">one raw score per vocabulary token</text>
+
+  <rect class="box"  x="200" y="396" width="320" height="42" rx="8"/>
+  <text x="360" y="421" text-anchor="middle"><a href="#g-softmax">Softmax</a> → probability distribution</text>
+
+  <rect class="boxg" x="120" y="486" width="230" height="48" rx="8"/>
+  <text x="235" y="506" text-anchor="middle" class="good">Training</text>
+  <text x="235" y="523" text-anchor="middle" font-size="12"><a href="#g-crossentropy">cross-entropy loss</a></text>
+
+  <rect class="boxa" x="380" y="486" width="230" height="48" rx="8"/>
+  <text x="495" y="506" text-anchor="middle" class="acc2">Generate</text>
+  <text x="495" y="523" text-anchor="middle" font-size="12">sample next token → loop ↺</text>
+
+  <!-- straight arrows -->
+  <path class="edge" d="M360,56  V86"  marker-end="url(#arrow)"/>
+  <path class="edge" d="M360,128 V158" marker-end="url(#arrow)"/>
+  <path class="edge" d="M360,200 V230" marker-end="url(#arrow)"/>
+  <path class="edge" d="M360,294 V324" marker-end="url(#arrow)"/>
+  <path class="edge" d="M360,366 V396" marker-end="url(#arrow)"/>
+  <path class="edge" d="M360,438 V462 H235 V486" marker-end="url(#arrow)"/>
+  <path class="edge" d="M360,462 H495 V486" marker-end="url(#arrow)"/>
+  <!-- generate feedback loop back to input -->
+  <path class="edged" d="M610,510 H660 V30 H520" marker-end="url(#arrowy)"/>
+  <text x="668" y="270" class="acc2" font-size="12" transform="rotate(90 668 270)">append &amp; repeat (autoregression)</text>
+</svg>
+<figcaption>Figure 1 — The full forward pass. Training compares the probabilities to the true next token; generation samples one and feeds it back.</figcaption>
+</figure>
+
+<p>The rest of Day 1 zooms into each box, with the maths. Quick map of concepts:</p>
+
 <table>
-  <thead>
-    <tr><th>#</th><th>Concept</th><th>Plain English</th><th>The maths</th><th>Why it matters</th></tr>
-  </thead>
+  <thead><tr><th>#</th><th>Concept</th><th>Plain English</th><th>The maths</th></tr></thead>
   <tbody>
-    <tr>
-      <td>1</td>
-      <td><a href="#g-autoregressive">Autoregressive&nbsp;LM</a></td>
-      <td>Predict the next token from the previous ones; repeat to generate.</td>
-      <td><span class="formula">P(x₁..ₜ)=Π P(xᵢ|x₁..ᵢ₋₁)</span> via the <a href="#g-chainrule">chain rule</a>.</td>
-      <td>Turns "model a whole sentence" into one repeatable prediction.</td>
-    </tr>
-    <tr>
-      <td>2</td>
-      <td><a href="#g-token">Tokenization</a></td>
-      <td>Map text to integer ids from a fixed <a href="#g-vocab">vocabulary</a>.</td>
-      <td>text → ids ∈ {0 … |V|−1}</td>
-      <td>Models do maths on numbers, not letters. Granularity (char vs <a href="#g-bpe">BPE</a>) trades vocab size against sequence length.</td>
-    </tr>
-    <tr>
-      <td>3</td>
-      <td><a href="#g-embedding">Embeddings</a></td>
-      <td>Each token id becomes a learned vector.</td>
-      <td>token i → row E[i] of matrix E (|V|×d); same as one‑hot · E.</td>
-      <td>Gives tokens geometry/meaning that gradient descent discovers.</td>
-    </tr>
-    <tr>
-      <td>4</td>
-      <td><a href="#g-logits">Logits</a> → <a href="#g-softmax">softmax</a></td>
-      <td>Model outputs raw scores; softmax turns them into probabilities.</td>
-      <td><span class="formula">softmax(z)ⱼ = exp(zⱼ) / Σₖ exp(zₖ)</span></td>
-      <td>Produces a valid probability distribution over the vocabulary (≥0, sums to 1).</td>
-    </tr>
-    <tr>
-      <td>5</td>
-      <td><a href="#g-crossentropy">Cross-entropy loss</a></td>
-      <td>Penalty for being confident and wrong; small when right.</td>
-      <td><span class="formula">L = −log P(correct token)</span> (= negative <a href="#g-mle">log-likelihood</a>)</td>
-      <td>The single number we minimize. Starts near <code>log|V|</code> for a random model.</td>
-    </tr>
-    <tr>
-      <td>6</td>
-      <td><a href="#g-gd">Gradient descent</a> + <a href="#g-backprop">backprop</a></td>
-      <td>Nudge every parameter in the direction that lowers the loss.</td>
-      <td><span class="formula">θ ← θ − η · ∇θ L</span></td>
-      <td>How the model actually learns. <a href="#g-adam">Adam</a> is the smarter step rule we use.</td>
-    </tr>
-    <tr>
-      <td>7</td>
-      <td><a href="#g-attention">Self-attention</a></td>
-      <td>Each token gathers info from the tokens it finds relevant.</td>
-      <td><span class="formula">Attention(Q,K,V) = softmax(Q·Kᵀ / √d) · V</span></td>
-      <td>The core mechanism of the transformer; lets context flow between tokens.</td>
-    </tr>
-    <tr>
-      <td>8</td>
-      <td><a href="#g-qkv">Query / Key / Value</a></td>
-      <td>Q = what I want, K = what each token offers, V = the info handed over.</td>
-      <td>q=x·W_Q, k=x·W_K, v=x·W_V; score = <a href="#g-dot">q·k</a>.</td>
-      <td>The "search" that decides where each token looks.</td>
-    </tr>
-    <tr>
-      <td>9</td>
-      <td><a href="#g-causal">Causal mask</a></td>
-      <td>A token may only look at the past, never the future.</td>
-      <td>set scoreᵢⱼ = −∞ for j &gt; i before <a href="#g-softmax">softmax</a>.</td>
-      <td>Without it the model could "cheat" by seeing the answer.</td>
-    </tr>
-    <tr>
-      <td>10</td>
-      <td><a href="#g-quadratic">Quadratic cost</a></td>
-      <td>Every token compares with every token → a T×T grid.</td>
-      <td>cost ∝ T² (2× longer ⇒ 4× work).</td>
-      <td>Why long context is expensive; motivates <a href="#g-sparse">sparse</a>/<a href="#g-flash">FlashAttention</a>.</td>
-    </tr>
+    <tr><td>1</td><td><a href="#g-autoregressive">Autoregressive LM</a></td><td>Predict next token, repeat.</td><td><span class="mono">P(x₁..ₜ)=Π P(xᵢ|x&lt;ᵢ)</span></td></tr>
+    <tr><td>2</td><td><a href="#g-token">Tokenization</a></td><td>Text → integer ids.</td><td>text → {0…|V|−1}</td></tr>
+    <tr><td>3</td><td><a href="#g-embedding">Embeddings</a></td><td>Each id → learned vector.</td><td>id i → row E[i]</td></tr>
+    <tr><td>4</td><td><a href="#g-softmax">Softmax</a></td><td>Scores → probabilities.</td><td><span class="mono">exp(zⱼ)/Σexp(zₖ)</span></td></tr>
+    <tr><td>5</td><td><a href="#g-crossentropy">Cross-entropy</a></td><td>Penalty for being wrong.</td><td><span class="mono">−log p(correct)</span></td></tr>
+    <tr><td>6</td><td><a href="#g-gd">Gradient descent</a></td><td>Nudge params downhill.</td><td><span class="mono">θ ← θ − η∇θL</span></td></tr>
+    <tr><td>7</td><td><a href="#g-attention">Self-attention</a></td><td>Tokens gather context.</td><td><span class="mono">softmax(QKᵀ/√d)V</span></td></tr>
   </tbody>
 </table>
 
-<!-- ===================================================================== -->
-<h2 id="qa">3. Questions I asked (and the answers)</h2>
-<table>
-  <thead><tr><th>#</th><th>My question</th><th>Short answer</th></tr></thead>
-  <tbody>
-    <tr>
-      <td>1</td>
-      <td>Why don't we tokenize letter-by-letter?</td>
-      <td>We <em>can</em> (and will, for learning — tiny vocab, fully transparent). But at scale it makes sequences ~5× longer ⇒ ~25× more <a href="#g-attention">attention</a> compute (<a href="#g-quadratic">quadratic</a>), wastes capacity on spelling, and fits less real text per context. <a href="#g-bpe">BPE</a> is the compromise.</td>
-    </tr>
-    <tr>
-      <td>2</td>
-      <td>Why is attention "quadratic"?</td>
-      <td>Cost grows like T² (the square of the length): T tokens each comparing against T tokens = a T×T grid. Double T ⇒ 4× work; 10× ⇒ 100×.</td>
-    </tr>
-    <tr>
-      <td>3</td>
-      <td>Can we optimise it / skip some checks?</td>
-      <td>Yes. <a href="#g-causal">Causal masking</a> already drops ~half. Beyond that: <a href="#g-sparse">sparse/local attention</a> (O(T·w)), <a href="#g-linear">linear attention</a> (O(T), drops softmax sharpness), <a href="#g-flash">FlashAttention</a> (same maths, faster memory) and the <a href="#g-kvcache">KV cache</a> (don't redo past work when generating). Trade-off: exact-but-quadratic vs approximate-but-cheap.</td>
-    </tr>
-    <tr>
-      <td>4</td>
-      <td>What is <code>softmax(Q·Kᵀ)</code>?</td>
-      <td>The <a href="#g-dot">dot products</a> <code>Q·Kᵀ</code> form a T×T grid of query–key similarity scores; <a href="#g-softmax">softmax</a> on each row turns them into attention weights (≥0, sum to 1) saying how much each token attends to every other. Divide by <a href="#g-sqrtd">√d</a> to keep it trainable, then multiply by <code>V</code> to blend the information.</td>
-    </tr>
-  </tbody>
-</table>
+<!-- ============================ TOKENIZE + EMBED ============================ -->
+<h2 id="tokembed">2. Tokenize &amp; embed — turning letters into vectors</h2>
+<p>
+Computers do maths on numbers, not letters. <a href="#g-token">Tokenization</a> maps each character to an integer id from a fixed <a href="#g-vocab">vocabulary</a>. Each id is then looked up in an <a href="#g-embedding">embedding</a> matrix <code>E</code> (shape <code>|V| × d</code>) to get a learned vector. Looking up row <code>i</code> is mathematically identical to multiplying a <em>one-hot</em> vector by <code>E</code>:
+</p>
+<span class="formula">embedding(i) = oneHot(i) · E      (picks row i of E)</span>
 
-<!-- ===================================================================== -->
-<h2 id="attn-walkthrough">4. The attention formula, decoded</h2>
-<p>The one line at the centre of every transformer:</p>
+<figure>
+<svg viewBox="0 0 720 300" role="img" aria-label="Embedding lookup">
+  <!-- char -> id -->
+  <text x="40" y="40" class="mut" font-size="12">character</text>
+  <rect class="boxa" x="40" y="50" width="60" height="40" rx="7"/>
+  <text x="70" y="75" text-anchor="middle" class="mono acc2">'c'</text>
+  <path class="edge" d="M100,70 H150" marker-end="url(#arrow)"/>
+  <text x="125" y="60" text-anchor="middle" class="mut" font-size="11">stoi</text>
+  <rect class="box" x="150" y="50" width="60" height="40" rx="7"/>
+  <text x="180" y="75" text-anchor="middle" class="mono">3</text>
+
+  <!-- one-hot -->
+  <text x="150" y="125" class="mut" font-size="12">one-hot (row selector)</text>
+  <g class="mono" font-size="12" text-anchor="middle">
+    <rect class="box" x="150" y="135" width="34" height="120"/>
+    <line class="grid" x1="150" y1="155" x2="184" y2="155"/><line class="grid" x1="150" y1="175" x2="184" y2="175"/>
+    <rect x="150" y="175" width="34" height="20" fill="#3a5b86"/>
+    <line class="grid" x1="150" y1="195" x2="184" y2="195"/><line class="grid" x1="150" y1="215" x2="184" y2="215"/><line class="grid" x1="150" y1="235" x2="184" y2="235"/>
+    <text x="167" y="150">0</text><text x="167" y="170">0</text><text x="167" y="190" class="acc2">1</text><text x="167" y="210">0</text><text x="167" y="230">0</text><text x="167" y="250">0</text>
+  </g>
+
+  <text x="210" y="200" class="mut mono">×</text>
+
+  <!-- E matrix -->
+  <text x="360" y="125" text-anchor="middle" class="mut" font-size="12">embedding matrix E  (|V| rows × d cols)</text>
+  <g>
+    <rect class="box" x="240" y="135" width="240" height="120"/>
+    <!-- row grid -->
+    <line class="grid" x1="240" y1="155" x2="480" y2="155"/><line class="grid" x1="240" y1="175" x2="480" y2="175"/>
+    <line class="grid" x1="240" y1="195" x2="480" y2="195"/><line class="grid" x1="240" y1="215" x2="480" y2="215"/><line class="grid" x1="240" y1="235" x2="480" y2="235"/>
+    <!-- highlight row 3 (y 175..195) -->
+    <rect x="240" y="175" width="240" height="20" fill="#23314a"/>
+    <text x="360" y="190" text-anchor="middle" class="mono acc2" font-size="11">0.21  -0.74  0.06  …  0.55</text>
+  </g>
+
+  <path class="edge" d="M480,185 H540" marker-end="url(#arrow)"/>
+  <text x="510" y="175" text-anchor="middle" class="mut" font-size="11">=</text>
+
+  <!-- result vector -->
+  <text x="630" y="125" text-anchor="middle" class="mut" font-size="12">vector for 'c'</text>
+  <rect class="boxg" x="560" y="160" width="140" height="50" rx="7"/>
+  <text x="630" y="190" text-anchor="middle" class="mono good" font-size="11">[0.21,-0.74,…,0.55]</text>
+  <text x="630" y="240" text-anchor="middle" class="mut" font-size="11">d numbers, learned by training</text>
+</svg>
+<figcaption>Figure 2 — Embedding lookup. The one-hot for id 3 selects row 3 of <code>E</code>. These vectors start random and become meaningful via <a href="#g-gd">gradient descent</a>.</figcaption>
+</figure>
+
+<!-- ============================ SOFTMAX ============================ -->
+<h2 id="softmax">3. Softmax — turning scores into probabilities</h2>
+<p>The model outputs <a href="#g-logits">logits</a> (raw, unbounded scores). <a href="#g-softmax">Softmax</a> converts them into a probability distribution — all values ≥ 0, summing to 1. The <code>exp</code> makes everything positive <em>and sharpens</em> differences, so the model can focus on the most likely tokens:</p>
+<span class="formula">softmax(z)ⱼ = exp(zⱼ) / Σₖ exp(zₖ)</span>
+
+<figure>
+<svg viewBox="0 0 720 260" role="img" aria-label="Softmax bar chart">
+  <!-- baseline -->
+  <line class="axis" x1="50" y1="210" x2="300" y2="210"/>
+  <line class="axis" x1="430" y1="210" x2="690" y2="210"/>
+  <text x="175" y="235" text-anchor="middle" class="mut">logits z (raw scores)</text>
+  <text x="560" y="235" text-anchor="middle" class="mut">probabilities (sum = 1.0)</text>
+
+  <!-- logit bars: 2.0,1.0,0.1 -> heights 120,60,6 -->
+  <rect class="boxa" x="80"  y="90"  width="46" height="120"/>
+  <rect class="boxa" x="160" y="150" width="46" height="60"/>
+  <rect class="boxa" x="240" y="204" width="46" height="6"/>
+  <text x="103" y="82"  text-anchor="middle" class="mono acc2">2.0</text>
+  <text x="183" y="142" text-anchor="middle" class="mono acc2">1.0</text>
+  <text x="263" y="196" text-anchor="middle" class="mono acc2">0.1</text>
+
+  <!-- arrow -->
+  <path class="edge" d="M310,130 H420" marker-end="url(#arrow)"/>
+  <text x="365" y="120" text-anchor="middle" class="acc">softmax</text>
+
+  <!-- prob bars: .659,.242,.099 -> heights 120,44,18 -->
+  <rect class="boxg" x="460" y="90"  width="46" height="120"/>
+  <rect class="boxg" x="540" y="166" width="46" height="44"/>
+  <rect class="boxg" x="620" y="192" width="46" height="18"/>
+  <text x="483" y="82"  text-anchor="middle" class="mono good">0.66</text>
+  <text x="563" y="158" text-anchor="middle" class="mono good">0.24</text>
+  <text x="643" y="184" text-anchor="middle" class="mono good">0.10</text>
+</svg>
+<figcaption>Figure 3 — A small lead in the logit (2.0 vs 1.0) becomes a big lead in probability (0.66 vs 0.24). That sharpening is softmax's superpower.</figcaption>
+</figure>
+
+<!-- ============================ CROSS ENTROPY ============================ -->
+<h2 id="loss">4. The loss — cross-entropy (how wrong are we?)</h2>
+<p>We know the true next token. If the model gave it probability <code>p</code>, the loss is <span class="mono">−log(p)</span>. Perfect (<code>p=1</code>) → 0 loss; confident-and-wrong (<code>p→0</code>) → huge loss. Minimizing this over all text = <a href="#g-mle">maximum likelihood</a>.</p>
+<span class="formula">L = −log( p(correct token) )        # cross-entropy for a one-hot target</span>
+
+<figure>
+<svg viewBox="0 0 560 300" role="img" aria-label="Cross-entropy loss curve">
+  <!-- axes -->
+  <line class="axis" x1="60" y1="250" x2="500" y2="250"/>
+  <line class="axis" x1="60" y1="30"  x2="60"  y2="250"/>
+  <text x="280" y="285" text-anchor="middle" class="mut">probability assigned to the correct token  p →</text>
+  <text x="20" y="140" text-anchor="middle" class="mut" transform="rotate(-90 20 140)">loss  −log(p)</text>
+  <!-- x ticks -->
+  <text x="60"  y="268" text-anchor="middle" class="mut mono" font-size="11">0</text>
+  <text x="270" y="268" text-anchor="middle" class="mut mono" font-size="11">0.5</text>
+  <text x="480" y="268" text-anchor="middle" class="mut mono" font-size="11">1.0</text>
+  <!-- curve -->
+  <polyline class="edge" stroke="#7ee787" points="81,44 102,92 144,139 186,167 228,187 270,203 312,215 354,225 396,235 438,243 480,250"/>
+  <!-- annotations -->
+  <circle cx="480" cy="250" r="4" class="good" fill="#7ee787"/>
+  <text x="470" y="244" text-anchor="end" class="good" font-size="12">p=1 → loss 0 (perfect)</text>
+  <circle cx="102" cy="92" r="4" fill="#ff9d7c"/>
+  <text x="116" y="92" class="warn" font-size="12">p=0.1 → loss 2.30 (bad)</text>
+  <line class="grid" x1="60" y1="92" x2="500" y2="92" stroke-dasharray="3 4"/>
+</svg>
+<figcaption>Figure 4 — Cross-entropy explodes as the model's confidence in the right answer drops. Note: a random model over |V|=65 chars starts at <code>−log(1/65)=log(65)≈4.17</code>.</figcaption>
+</figure>
+
+<!-- ============================ GRADIENT DESCENT ============================ -->
+<h2 id="gd">5. Learning — gradient descent down the loss valley</h2>
+<p>The <a href="#g-gd">gradient</a> <span class="mono">∇θL</span> points uphill (steepest increase). To <em>reduce</em> loss we step the opposite way, scaled by the <a href="#g-lr">learning rate</a> <code>η</code>. <a href="#g-backprop">Backpropagation</a> computes that gradient for millions of parameters in ~one pass.</p>
+<span class="formula">θ ← θ − η · ∇θL        # repeat on random mini-batches (stochastic GD)</span>
+
+<figure>
+<svg viewBox="0 0 560 300" role="img" aria-label="Gradient descent on a loss curve">
+  <!-- axes -->
+  <line class="axis" x1="50" y1="260" x2="520" y2="260"/>
+  <line class="axis" x1="50" y1="20"  x2="50"  y2="260"/>
+  <text x="285" y="288" text-anchor="middle" class="mut">parameter θ →</text>
+  <text x="18" y="140" text-anchor="middle" class="mut" transform="rotate(-90 18 140)">loss L(θ)</text>
+  <!-- valley curve (lower on screen = lower loss) -->
+  <polyline class="edge" points="80,60 130,139 180,195 230,229 280,240 330,229 380,195 430,139 480,60"/>
+  <!-- descending dots -->
+  <circle cx="130" cy="139" r="6" fill="#ffd479"/>
+  <circle cx="180" cy="195" r="6" fill="#ffd479"/>
+  <circle cx="230" cy="229" r="6" fill="#ffd479"/>
+  <circle cx="280" cy="240" r="6" fill="#7ee787"/>
+  <!-- step arrows -->
+  <path class="edged" d="M138,143 L172,191" marker-end="url(#arrowy)"/>
+  <path class="edged" d="M188,199 L222,225" marker-end="url(#arrowy)"/>
+  <path class="edged" d="M238,232 L272,239" marker-end="url(#arrowy)"/>
+  <text x="120" y="125" class="acc2" font-size="12">start (high loss)</text>
+  <text x="300" y="238" class="good" font-size="12">minimum (low loss)</text>
+  <text x="300" y="120" class="mut" font-size="12">each step: −η·∇L</text>
+</svg>
+<figcaption>Figure 5 — Gradient descent rolls the parameters downhill. Too large η overshoots the valley; too small crawls. This is the knob you'll feel most.</figcaption>
+</figure>
+
+<!-- ============================ ATTENTION ============================ -->
+<h2 id="attention">6. Self-attention — the heart of the transformer</h2>
+<p>
+Each token builds three vectors via learned projections: a <a href="#g-qkv">Query</a> (what I want), a <a href="#g-qkv">Key</a> (what I offer), and a <a href="#g-qkv">Value</a> (the info I share). A token finds relevant context by comparing its query against every key with a <a href="#g-dot">dot product</a>, softmaxing the scores into weights, and taking a weighted average of values:
+</p>
 <span class="formula">Attention(Q, K, V) = softmax( Q·Kᵀ / √d ) · V</span>
-<ul>
-  <li><b><a href="#g-qkv">Q·Kᵀ</a></b> — every <a href="#g-dot">dot product</a> of query·key → a T×T grid of raw similarity scores (<a href="#g-logits">logits</a>).</li>
-  <li><b>/ <a href="#g-sqrtd">√d</a></b> — scale down so large dot products don't saturate the next step.</li>
-  <li><b><a href="#g-softmax">softmax</a></b> (per row) — turn each row of scores into attention weights that sum to 1.</li>
-  <li><b>· V</b> — use those weights to take a weighted average of the <a href="#g-qkv">value</a> vectors → each token's context-aware output.</li>
-</ul>
-<div class="note">Worked example: query <code>q₂=[1,0]</code>, keys <code>k₁=[1,0]</code>, <code>k₂=[0.2,0.9]</code> →
-scores <code>[1.0, 0.2]</code> → softmax → <code>[0.69, 0.31]</code>. Token 2 pays 69% attention to token 1.</div>
 
-<!-- ===================================================================== -->
-<h2 id="glossary">5. Glossary &amp; references</h2>
+<figure>
+<svg viewBox="0 0 720 250" role="img" aria-label="Attention dataflow">
+  <rect class="boxa" x="20" y="100" width="70" height="44" rx="7"/>
+  <text x="55" y="127" text-anchor="middle" class="mono">x</text>
+  <text x="55" y="92" text-anchor="middle" class="mut" font-size="11">token vec</text>
+
+  <!-- projections -->
+  <rect class="box" x="140" y="40"  width="64" height="36" rx="7"/><text x="172" y="63" text-anchor="middle" class="mono">Q=xWq</text>
+  <rect class="box" x="140" y="104" width="64" height="36" rx="7"/><text x="172" y="127" text-anchor="middle" class="mono">K=xWk</text>
+  <rect class="box" x="140" y="168" width="64" height="36" rx="7"/><text x="172" y="191" text-anchor="middle" class="mono">V=xWv</text>
+  <path class="edge" d="M90,116 L140,58"  marker-end="url(#arrow)"/>
+  <path class="edge" d="M90,122 L140,122" marker-end="url(#arrow)"/>
+  <path class="edge" d="M90,128 L140,186" marker-end="url(#arrow)"/>
+
+  <!-- QK^T -->
+  <rect class="box" x="250" y="72" width="80" height="36" rx="7"/><text x="290" y="95" text-anchor="middle" class="mono">Q·Kᵀ</text>
+  <path class="edge" d="M204,58  L250,86"  marker-end="url(#arrow)"/>
+  <path class="edge" d="M204,122 L250,98" marker-end="url(#arrow)"/>
+  <text x="290" y="65" text-anchor="middle" class="mut" font-size="11">similarity grid</text>
+
+  <rect class="box" x="360" y="72" width="60" height="36" rx="7"/><text x="390" y="95" text-anchor="middle" class="mono">÷ √d</text>
+  <path class="edge" d="M330,90 H360" marker-end="url(#arrow)"/>
+
+  <rect class="box" x="450" y="72" width="70" height="36" rx="7"/><text x="485" y="95" text-anchor="middle" class="mono">mask</text>
+  <path class="edge" d="M420,90 H450" marker-end="url(#arrow)"/>
+  <text x="485" y="65" text-anchor="middle" class="warn" font-size="11">causal</text>
+
+  <rect class="boxa" x="550" y="72" width="90" height="36" rx="7"/><text x="595" y="95" text-anchor="middle" class="mono acc2">softmax</text>
+  <path class="edge" d="M520,90 H550" marker-end="url(#arrow)"/>
+
+  <!-- weighted sum with V -->
+  <circle class="boxg" cx="595" cy="186" r="22"/><text x="595" y="191" text-anchor="middle" class="mono good">·V</text>
+  <path class="edge" d="M595,108 V164" marker-end="url(#arrow)"/>
+  <path class="edge" d="M204,186 C 420,210 520,210 575,200" marker-end="url(#arrow)"/>
+
+  <rect class="boxg" x="650" y="164" width="60" height="44" rx="7"/><text x="680" y="191" text-anchor="middle" class="mono good">out</text>
+  <path class="edge" d="M617,186 H650" marker-end="url(#arrow)"/>
+  <text x="680" y="225" text-anchor="middle" class="mut" font-size="11">context-aware</text>
+</svg>
+<figcaption>Figure 6 — Attention dataflow. <code>Q·Kᵀ</code> scores every pair, <code>√d</code> keeps it trainable, the mask hides the future, softmax makes weights, and <code>·V</code> blends the information.</figcaption>
+</figure>
+
+<h3 id="why-sqrtd">Why divide by √d?</h3>
+<p>A <a href="#g-dot">dot product</a> sums <code>d</code> terms, so its magnitude grows with <code>d</code>. Large scores push <a href="#g-softmax">softmax</a> into a near one-hot, flat region where gradients vanish (nothing learns). Dividing by <span class="mono">√d</span> normalizes the variance back to ~1, keeping softmax "soft" and trainable.</p>
+
+<!-- ============================ CAUSAL MASK ============================ -->
+<h2 id="causal">7. The causal mask &amp; the T×T grid</h2>
+<p>
+<code>Q·Kᵀ</code> produces a <code>T×T</code> grid: entry (i, j) = "how much should token i attend to token j". For next-token prediction a token must not see the <em>future</em>, so we set those cells to <span class="mono">−∞</span> before <a href="#g-softmax">softmax</a> (which makes their weight 0). Only the lower triangle survives.
+</p>
+
+<figure>
+<svg viewBox="0 0 720 320" role="img" aria-label="Causal attention matrix">
+  <!-- column headers -->
+  <g class="mono mut" font-size="12" text-anchor="middle">
+    <text x="150" y="44">k₁</text><text x="190" y="44">k₂</text><text x="230" y="44">k₃</text><text x="270" y="44">k₄</text><text x="310" y="44">k₅</text><text x="350" y="44">k₆</text>
+  </g>
+  <text x="250" y="24" text-anchor="middle" class="mut">keys (what each token offers) →</text>
+  <text x="96" y="170" text-anchor="middle" class="mut" transform="rotate(-90 96 170)">queries ↓</text>
+  <!-- 6x6 grid, cell 40 -->
+  <g class="mono" font-size="11" text-anchor="middle">
+  <!-- generate rows; active if col<=row -->
+  <!-- row1 (i=0): only j0 active -->
+  <!-- We draw each cell explicitly -->
+  <!-- helper: x=130+j*40, y=50+i*40 -->
+  <!-- ROW 0 -->
+  <rect x="130" y="50" width="40" height="40" class="boxg"/><text x="150" y="75" class="good">.</text>
+  <rect x="170" y="50" width="40" height="40" class="box" fill="url(#hatch)"/>
+  <rect x="210" y="50" width="40" height="40" class="box" fill="url(#hatch)"/>
+  <rect x="250" y="50" width="40" height="40" class="box" fill="url(#hatch)"/>
+  <rect x="290" y="50" width="40" height="40" class="box" fill="url(#hatch)"/>
+  <rect x="330" y="50" width="40" height="40" class="box" fill="url(#hatch)"/>
+  <!-- ROW 1 -->
+  <rect x="130" y="90" width="40" height="40" class="boxg"/>
+  <rect x="170" y="90" width="40" height="40" class="boxg"/>
+  <rect x="210" y="90" width="40" height="40" class="box" fill="url(#hatch)"/>
+  <rect x="250" y="90" width="40" height="40" class="box" fill="url(#hatch)"/>
+  <rect x="290" y="90" width="40" height="40" class="box" fill="url(#hatch)"/>
+  <rect x="330" y="90" width="40" height="40" class="box" fill="url(#hatch)"/>
+  <!-- ROW 2 -->
+  <rect x="130" y="130" width="40" height="40" class="boxg"/>
+  <rect x="170" y="130" width="40" height="40" class="boxg"/>
+  <rect x="210" y="130" width="40" height="40" class="boxg"/>
+  <rect x="250" y="130" width="40" height="40" class="box" fill="url(#hatch)"/>
+  <rect x="290" y="130" width="40" height="40" class="box" fill="url(#hatch)"/>
+  <rect x="330" y="130" width="40" height="40" class="box" fill="url(#hatch)"/>
+  <!-- ROW 3 -->
+  <rect x="130" y="170" width="40" height="40" class="boxg"/>
+  <rect x="170" y="170" width="40" height="40" class="boxg"/>
+  <rect x="210" y="170" width="40" height="40" class="boxg"/>
+  <rect x="250" y="170" width="40" height="40" class="boxg"/>
+  <rect x="290" y="170" width="40" height="40" class="box" fill="url(#hatch)"/>
+  <rect x="330" y="170" width="40" height="40" class="box" fill="url(#hatch)"/>
+  <!-- ROW 4 -->
+  <rect x="130" y="210" width="40" height="40" class="boxg"/>
+  <rect x="170" y="210" width="40" height="40" class="boxg"/>
+  <rect x="210" y="210" width="40" height="40" class="boxg"/>
+  <rect x="250" y="210" width="40" height="40" class="boxg"/>
+  <rect x="290" y="210" width="40" height="40" class="boxg"/>
+  <rect x="330" y="210" width="40" height="40" class="box" fill="url(#hatch)"/>
+  <!-- ROW 5 -->
+  <rect x="130" y="250" width="40" height="40" class="boxg"/>
+  <rect x="170" y="250" width="40" height="40" class="boxg"/>
+  <rect x="210" y="250" width="40" height="40" class="boxg"/>
+  <rect x="250" y="250" width="40" height="40" class="boxg"/>
+  <rect x="290" y="250" width="40" height="40" class="boxg"/>
+  <rect x="330" y="250" width="40" height="40" class="boxg"/>
+  </g>
+  <!-- row labels -->
+  <g class="mono mut" font-size="12" text-anchor="middle">
+    <text x="116" y="75">q₁</text><text x="116" y="115">q₂</text><text x="116" y="155">q₃</text><text x="116" y="195">q₄</text><text x="116" y="235">q₅</text><text x="116" y="275">q₆</text>
+  </g>
+  <!-- legend / explanation -->
+  <rect x="440" y="70" width="22" height="22" class="boxg"/><text x="472" y="86" class="mut" font-size="12">attended (j ≤ i)</text>
+  <rect x="440" y="104" width="22" height="22" class="box" fill="url(#hatch)"/><text x="472" y="120" class="mut" font-size="12">masked: −∞ (future, j &gt; i)</text>
+  <text x="440" y="160" class="acc2" font-size="13">Each surviving row is softmaxed</text>
+  <text x="440" y="180" class="mut" font-size="12">→ weights ≥ 0 that sum to 1.</text>
+  <text x="440" y="214" class="warn" font-size="13">Grid is T×T cells →</text>
+  <text x="440" y="234" class="warn" font-size="12">cost grows as <tspan class="mono">T²</tspan> (next section).</text>
+</svg>
+<figcaption>Figure 7 — The causal attention matrix for T=6. The hatched upper triangle is masked out so no token sees its future.</figcaption>
+</figure>
+
+<!-- ============================ QUADRATIC ============================ -->
+<h2 id="quadratic">8. Why attention is "quadratic" — O(T²)</h2>
+<p>Because every token compares with every token, the work scales with the <em>area</em> of that T×T grid: <span class="mono">T²</span>. Double the length → 4× the work; 10× → 100×. Compare that to a linear <span class="mono">O(T)</span> operation:</p>
+
+<figure>
+<svg viewBox="0 0 560 300" role="img" aria-label="Linear vs quadratic growth">
+  <line class="axis" x1="60" y1="250" x2="520" y2="250"/>
+  <line class="axis" x1="60" y1="30"  x2="60"  y2="250"/>
+  <text x="290" y="285" text-anchor="middle" class="mut">sequence length T →</text>
+  <text x="22" y="140" text-anchor="middle" class="mut" transform="rotate(-90 22 140)">cost</text>
+  <!-- quadratic: x=60+T*46, y=250-T^2*2 -->
+  <polyline class="edge" stroke="#ff9d7c" points="60,250 106,248 152,242 198,232 244,218 290,200 336,178 382,152 428,122 474,88 520,50"/>
+  <text x="486" y="56" class="warn" font-size="13">O(T²) attention</text>
+  <!-- linear: y=250-T*5 -> at T=10 200 -->
+  <polyline class="edge" stroke="#7ee787" points="60,250 106,245 152,240 198,235 244,230 290,225 336,220 382,215 428,210 474,205 520,200"/>
+  <text x="430" y="198" class="good" font-size="13">O(T) linear</text>
+  <!-- doubling annotation -->
+  <line class="grid" x1="290" y1="200" x2="290" y2="250" stroke-dasharray="3 4"/>
+  <line class="grid" x1="520" y1="50"  x2="520" y2="250" stroke-dasharray="3 4"/>
+</svg>
+<figcaption>Figure 8 — The quadratic curve pulls away fast. This is why long context is expensive, and why <a href="#g-flash">FlashAttention</a> / <a href="#g-sparse">sparse</a> / <a href="#g-kvcache">KV-cache</a> tricks exist.</figcaption>
+</figure>
+
+<table>
+  <thead><tr><th>T (tokens)</th><th>Comparisons (T²)</th><th>vs previous</th></tr></thead>
+  <tbody>
+    <tr><td>1,000</td><td>1,000,000</td><td>—</td></tr>
+    <tr><td>2,000</td><td>4,000,000</td><td class="warn">×4 (length ×2)</td></tr>
+    <tr><td>10,000</td><td>100,000,000</td><td class="warn">×100 (length ×10)</td></tr>
+  </tbody>
+</table>
+<p class="note"><b>Optimisations</b> (from your question): causal masking already drops ~half; <a href="#g-sparse">sparse/local</a> attention → <span class="mono">O(T·w)</span>; <a href="#g-linear">linear</a> attention → <span class="mono">O(T)</span>; <a href="#g-flash">FlashAttention</a> keeps the maths but crushes the memory cost; the <a href="#g-kvcache">KV cache</a> avoids redoing past work during generation.</p>
+
+<!-- ============================ BLOCK + MULTIHEAD ============================ -->
+<h2 id="block">9. The transformer block — multi-head + residuals + LayerNorm</h2>
+<p>Real models run several attention heads in parallel (each can specialize — one tracks subjects, another punctuation, …), concatenate them, and project back. Each block wraps attention and a <a href="#g-ffn">feed-forward</a> network with <a href="#g-residual">residual</a> connections (<span class="mono">x + f(x)</span>, so gradients flow) and <a href="#g-layernorm">LayerNorm</a> (stabilizes the scale).</p>
+
+<figure>
+<svg viewBox="0 0 720 300" role="img" aria-label="Multi-head attention and transformer block">
+  <!-- LEFT: multi-head -->
+  <text x="170" y="24" text-anchor="middle" class="acc2">Multi-Head Attention</text>
+  <rect class="boxa" x="140" y="250" width="60" height="34" rx="7"/><text x="170" y="272" text-anchor="middle" class="mono">x</text>
+  <!-- heads -->
+  <rect class="box" x="60"  y="150" width="60" height="40" rx="7"/><text x="90"  y="174" text-anchor="middle" class="mono" font-size="11">head 1</text>
+  <rect class="box" x="140" y="150" width="60" height="40" rx="7"/><text x="170" y="174" text-anchor="middle" class="mono" font-size="11">head 2</text>
+  <rect class="box" x="220" y="150" width="60" height="40" rx="7"/><text x="250" y="174" text-anchor="middle" class="mono" font-size="11">head h</text>
+  <path class="edge" d="M160,250 L100,190" marker-end="url(#arrow)"/>
+  <path class="edge" d="M170,250 L170,190" marker-end="url(#arrow)"/>
+  <path class="edge" d="M180,250 L240,190" marker-end="url(#arrow)"/>
+  <rect class="box" x="90" y="90" width="160" height="36" rx="7"/><text x="170" y="113" text-anchor="middle" class="mono" font-size="12">concat → Linear proj</text>
+  <path class="edge" d="M90,150 L150,126"  marker-end="url(#arrow)"/>
+  <path class="edge" d="M170,150 L170,126" marker-end="url(#arrow)"/>
+  <path class="edge" d="M250,150 L190,126" marker-end="url(#arrow)"/>
+  <text x="170" y="70" text-anchor="middle" class="mut" font-size="11">each head: softmax(QKᵀ/√d)V</text>
+
+  <!-- divider -->
+  <line class="grid" x1="370" y1="20" x2="370" y2="290"/>
+
+  <!-- RIGHT: block with residuals -->
+  <text x="540" y="24" text-anchor="middle" class="acc2">Transformer Block</text>
+  <rect class="boxa" x="500" y="250" width="80" height="32" rx="7"/><text x="540" y="271" text-anchor="middle" class="mono">x in</text>
+  <rect class="box" x="500" y="200" width="80" height="30" rx="7"/><text x="540" y="220" text-anchor="middle" class="mono" font-size="11">LayerNorm</text>
+  <rect class="box" x="500" y="150" width="80" height="30" rx="7"/><text x="540" y="170" text-anchor="middle" class="mono" font-size="11">Attention</text>
+  <circle cx="540" cy="120" r="13" class="boxg"/><text x="540" y="125" text-anchor="middle" class="good mono">+</text>
+  <rect class="box" x="500" y="78" width="80" height="26" rx="7"/><text x="540" y="96" text-anchor="middle" class="mono" font-size="11">LayerNorm</text>
+  <rect class="box" x="500" y="44" width="80" height="26" rx="7"/><text x="540" y="62" text-anchor="middle" class="mono" font-size="11">FeedFwd</text>
+  <circle cx="540" cy="22" r="13" class="boxg"/><text x="540" y="27" text-anchor="middle" class="good mono">+</text>
+
+  <path class="edge" d="M540,250 V230" marker-end="url(#arrow)"/>
+  <path class="edge" d="M540,200 V180" marker-end="url(#arrow)"/>
+  <path class="edge" d="M540,150 V133" marker-end="url(#arrow)"/>
+  <path class="edge" d="M540,107 V104" marker-end="url(#arrow)"/>
+  <path class="edge" d="M540,78 V70" marker-end="url(#arrow)"/>
+  <path class="edge" d="M540,44 V35" marker-end="url(#arrow)"/>
+  <!-- residual bypasses -->
+  <path class="edged" d="M580,266 H640 V120 H553" marker-end="url(#arrowy)"/>
+  <path class="edged" d="M580,120 H612 V22 H553" marker-end="url(#arrowy)"/>
+  <text x="648" y="200" class="acc2" font-size="11" transform="rotate(90 648 200)">residual: x + f(x)</text>
+</svg>
+<figcaption>Figure 9 — Left: heads run in parallel, then concat+project. Right: one block = (LN→Attention)+residual, then (LN→FeedForward)+residual. Stack N of these.</figcaption>
+</figure>
+
+<!-- ============================ GLOSSARY ============================ -->
+<h2 id="glossary">10. Glossary &amp; references</h2>
 <dl class="glossary">
-
   <dt id="g-autoregressive">Autoregressive model</dt>
-  <dd>A model that predicts the next value from its own previous values; for text, the next token from previous tokens.
-    <div class="refs">Ref: <a href="https://en.wikipedia.org/wiki/Autoregressive_model">Wikipedia — Autoregressive model</a></div></dd>
-
+  <dd>Predicts the next value from its own previous values (next token from previous tokens).
+    <div class="refs"><a href="https://en.wikipedia.org/wiki/Autoregressive_model">Wikipedia — Autoregressive model</a></div></dd>
   <dt id="g-chainrule">Chain rule (probability)</dt>
-  <dd>The exact factorization <code>P(x₁..ₜ)=Π P(xᵢ|x₁..ᵢ₋₁)</code> that lets one next-token model score whole sequences.
-    <div class="refs">Ref: <a href="https://en.wikipedia.org/wiki/Chain_rule_(probability)">Wikipedia — Chain rule (probability)</a></div></dd>
-
+  <dd><code>P(x₁..ₜ)=Π P(xᵢ|x&lt;ᵢ)</code>; lets one next-token model score whole sequences.
+    <div class="refs"><a href="https://en.wikipedia.org/wiki/Chain_rule_(probability)">Wikipedia — Chain rule</a></div></dd>
   <dt id="g-token">Tokenization</dt>
-  <dd>Splitting text into units (characters or subwords) and mapping each to an integer id.
-    <div class="refs">Ref: <a href="https://github.com/openai/tiktoken">tiktoken (GPT tokenizer)</a></div></dd>
-
+  <dd>Splitting text into units and mapping each to an integer id.
+    <div class="refs"><a href="https://github.com/openai/tiktoken">tiktoken</a></div></dd>
   <dt id="g-vocab">Vocabulary (|V|)</dt>
-  <dd>The fixed set of all possible tokens. Size <code>|V|</code> sets the embedding-table and output-layer width.</dd>
-
+  <dd>The fixed set of possible tokens; its size sets embedding-table and output widths.</dd>
   <dt id="g-bpe">Byte-Pair Encoding (BPE)</dt>
-  <dd>Subword tokenizer: start from characters and greedily merge the most frequent adjacent pairs until a target vocab size. Common words become one token; rare words split; no out-of-vocabulary.
-    <div class="refs">Ref: <a href="https://en.wikipedia.org/wiki/Byte_pair_encoding">Wikipedia — Byte-pair encoding</a> · <a href="https://arxiv.org/abs/1508.07909">Sennrich et al. 2015</a></div></dd>
-
+  <dd>Subword tokenizer that greedily merges frequent adjacent pairs; common words → one token, no out-of-vocabulary.
+    <div class="refs"><a href="https://en.wikipedia.org/wiki/Byte_pair_encoding">Wikipedia</a> · <a href="https://arxiv.org/abs/1508.07909">Sennrich 2015</a></div></dd>
   <dt id="g-embedding">Embedding</dt>
-  <dd>A learned vector representing a token (a row of the embedding matrix E, shape |V|×d). Looking it up equals multiplying a one-hot vector by E.
-    <div class="refs">Ref: <a href="https://en.wikipedia.org/wiki/Word_embedding">Wikipedia — Word embedding</a></div></dd>
-
+  <dd>A learned vector for a token (a row of matrix E, |V|×d). Lookup = one-hot · E.
+    <div class="refs"><a href="https://en.wikipedia.org/wiki/Word_embedding">Wikipedia — Word embedding</a></div></dd>
   <dt id="g-logits">Logits</dt>
-  <dd>The model's raw, unbounded output scores before softmax (one per vocabulary token).
-    <div class="refs">Ref: <a href="https://en.wikipedia.org/wiki/Logit">Wikipedia — Logit</a></div></dd>
-
+  <dd>Raw unbounded output scores before softmax (one per token).
+    <div class="refs"><a href="https://en.wikipedia.org/wiki/Logit">Wikipedia — Logit</a></div></dd>
   <dt id="g-softmax">Softmax</dt>
-  <dd>Turns a vector of real scores into a probability distribution: <code>softmax(z)ⱼ = exp(zⱼ) / Σₖ exp(zₖ)</code>. All outputs are ≥0 and sum to 1; the <code>exp</code> sharpens differences so the model can focus.
-    <div class="refs">Ref: <a href="https://en.wikipedia.org/wiki/Softmax_function">Wikipedia — Softmax function</a></div></dd>
-
+  <dd><code>softmax(z)ⱼ = exp(zⱼ)/Σₖexp(zₖ)</code>: scores → probabilities (≥0, sum 1); exp sharpens differences.
+    <div class="refs"><a href="https://en.wikipedia.org/wiki/Softmax_function">Wikipedia — Softmax</a></div></dd>
   <dt id="g-crossentropy">Cross-entropy loss</dt>
-  <dd><code>L = −Σ yⱼ log pⱼ = −log p(correct)</code>. The training objective; minimizing it = <a href="#g-mle">maximum likelihood</a>. <a href="#g-perplexity">Perplexity</a> = exp(L).
-    <div class="refs">Ref: <a href="https://en.wikipedia.org/wiki/Cross-entropy">Wikipedia — Cross-entropy</a></div></dd>
-
-  <dt id="g-mle">Maximum likelihood / log-likelihood</dt>
-  <dd>Choose parameters that make the observed text most probable; equivalently minimize the negative log-likelihood.
-    <div class="refs">Ref: <a href="https://en.wikipedia.org/wiki/Maximum_likelihood_estimation">Wikipedia — MLE</a></div></dd>
-
+  <dd><code>L=−log p(correct)</code>; minimizing it = maximum likelihood. <a href="#g-perplexity">Perplexity</a>=exp(L).
+    <div class="refs"><a href="https://en.wikipedia.org/wiki/Cross-entropy">Wikipedia — Cross-entropy</a></div></dd>
+  <dt id="g-mle">Maximum likelihood</dt>
+  <dd>Pick parameters that make the observed data most probable (= minimize negative log-likelihood).
+    <div class="refs"><a href="https://en.wikipedia.org/wiki/Maximum_likelihood_estimation">Wikipedia — MLE</a></div></dd>
   <dt id="g-perplexity">Perplexity</dt>
-  <dd><code>exp(loss)</code> — roughly "how many tokens the model is confused between." 1 = perfect, |V| = random.
-    <div class="refs">Ref: <a href="https://en.wikipedia.org/wiki/Perplexity">Wikipedia — Perplexity</a></div></dd>
-
+  <dd><code>exp(loss)</code> — roughly how many tokens the model is confused between.
+    <div class="refs"><a href="https://en.wikipedia.org/wiki/Perplexity">Wikipedia — Perplexity</a></div></dd>
   <dt id="g-gd">Gradient descent</dt>
-  <dd>Iteratively step parameters opposite the gradient of the loss: <code>θ ← θ − η·∇θL</code>. <code>η</code> is the learning rate.
-    <div class="refs">Ref: <a href="https://en.wikipedia.org/wiki/Gradient_descent">Wikipedia — Gradient descent</a></div></dd>
-
+  <dd><code>θ ← θ − η·∇θL</code>; step opposite the gradient to lower the loss.
+    <div class="refs"><a href="https://en.wikipedia.org/wiki/Gradient_descent">Wikipedia — Gradient descent</a></div></dd>
+  <dt id="g-lr">Learning rate (η)</dt>
+  <dd>The step size in gradient descent. Too big → diverge; too small → slow.</dd>
   <dt id="g-backprop">Backpropagation</dt>
-  <dd>The chain rule of calculus applied backward through the network to compute every parameter's gradient in ~one pass. PyTorch's <code>loss.backward()</code>.
-    <div class="refs">Ref: <a href="https://en.wikipedia.org/wiki/Backpropagation">Wikipedia — Backpropagation</a></div></dd>
-
+  <dd>Chain rule of calculus applied backward to get all gradients in ~one pass. PyTorch's <code>loss.backward()</code>.
+    <div class="refs"><a href="https://en.wikipedia.org/wiki/Backpropagation">Wikipedia — Backprop</a></div></dd>
   <dt id="g-adam">Adam / AdamW</dt>
-  <dd>An optimizer that adapts the step size per parameter using running averages of gradients (momentum) and their magnitudes; AdamW decouples weight decay.
-    <div class="refs">Ref: <a href="https://arxiv.org/abs/1412.6980">Kingma &amp; Ba 2014</a> · <a href="https://arxiv.org/abs/1711.05101">Loshchilov &amp; Hutter 2017 (AdamW)</a></div></dd>
-
+  <dd>Optimizer adapting per-parameter step size via momentum + gradient magnitudes; AdamW decouples weight decay.
+    <div class="refs"><a href="https://arxiv.org/abs/1412.6980">Kingma &amp; Ba</a> · <a href="https://arxiv.org/abs/1711.05101">AdamW</a></div></dd>
   <dt id="g-attention">Self-attention</dt>
-  <dd>Mechanism where each token computes a weighted sum of all (past) tokens' values, weighted by query–key similarity. <code>softmax(Q·Kᵀ/√d)·V</code>.
-    <div class="refs">Ref: <a href="https://arxiv.org/abs/1706.03762">Vaswani et al. 2017 — "Attention Is All You Need"</a></div></dd>
-
-  <dt id="g-qkv">Query, Key, Value (Q, K, V)</dt>
-  <dd>Three learned linear projections of each token: Query = what I'm looking for, Key = what I offer, Value = the information I pass on when attended to.
-    <div class="refs">Ref: <a href="https://arxiv.org/abs/1706.03762">Vaswani et al. 2017, §3.2</a></div></dd>
-
+  <dd>Each token = weighted sum of (past) values, weighted by query–key similarity: <code>softmax(QKᵀ/√d)V</code>.
+    <div class="refs"><a href="https://arxiv.org/abs/1706.03762">Vaswani et al. 2017</a></div></dd>
+  <dt id="g-qkv">Query / Key / Value</dt>
+  <dd>Three learned projections: Query = what I want, Key = what I offer, Value = info passed on.
+    <div class="refs"><a href="https://arxiv.org/abs/1706.03762">Vaswani et al., §3.2</a></div></dd>
   <dt id="g-dot">Dot product</dt>
-  <dd><code>a·b = Σ aᵢbᵢ</code> — a single number measuring how aligned two vectors are; the similarity score in attention.
-    <div class="refs">Ref: <a href="https://en.wikipedia.org/wiki/Dot_product">Wikipedia — Dot product</a></div></dd>
-
-  <dt id="g-sqrtd">Scaling by √d</dt>
-  <dd>Dividing the scores by √(head dim) keeps their variance ~1 so softmax doesn't saturate (which would kill gradients). The "scaled" in scaled dot-product attention.
-    <div class="refs">Ref: <a href="https://arxiv.org/abs/1706.03762">Vaswani et al. 2017, §3.2.1</a></div></dd>
-
+  <dd><code>a·b=Σaᵢbᵢ</code>: a single number measuring vector alignment; the attention similarity score.
+    <div class="refs"><a href="https://en.wikipedia.org/wiki/Dot_product">Wikipedia — Dot product</a></div></dd>
   <dt id="g-causal">Causal mask</dt>
-  <dd>Setting future positions' scores to −∞ before softmax so each token attends only to itself and the past. Required for next-token training.</dd>
-
-  <dt id="g-quadratic">Quadratic cost (O(T²))</dt>
-  <dd>Attention compares every token with every token, so compute/memory grow with the square of the sequence length T.
-    <div class="refs">Ref: <a href="https://en.wikipedia.org/wiki/Time_complexity">Wikipedia — Time complexity</a></div></dd>
-
+  <dd>Set future positions' scores to −∞ before softmax so each token attends only to itself and the past.</dd>
+  <dt id="g-quadratic">Quadratic cost O(T²)</dt>
+  <dd>Attention compares every pair, so compute/memory grow with the square of length T.
+    <div class="refs"><a href="https://en.wikipedia.org/wiki/Time_complexity">Wikipedia — Time complexity</a></div></dd>
   <dt id="g-sparse">Sparse / local attention</dt>
-  <dd>Only attend to a subset of tokens (e.g. a sliding window of size w, plus a few global tokens) → O(T·w). Risks missing genuine long-range links.
-    <div class="refs">Ref: <a href="https://arxiv.org/abs/2004.05150">Longformer</a> · <a href="https://arxiv.org/abs/2007.14062">BigBird</a></div></dd>
-
+  <dd>Attend to a subset (window w + global tokens) → O(T·w). May miss long-range links.
+    <div class="refs"><a href="https://arxiv.org/abs/2004.05150">Longformer</a> · <a href="https://arxiv.org/abs/2007.14062">BigBird</a></div></dd>
   <dt id="g-linear">Linear attention</dt>
-  <dd>Reformulate (drop/approximate softmax) so the T×T matrix is never built → O(T). Loses some of softmax's sharp focus.
-    <div class="refs">Ref: <a href="https://arxiv.org/abs/2006.04768">Linformer</a> · <a href="https://arxiv.org/abs/2009.14794">Performer</a></div></dd>
-
+  <dd>Approximate/drop softmax so the T×T matrix never forms → O(T). Loses some sharp focus.
+    <div class="refs"><a href="https://arxiv.org/abs/2006.04768">Linformer</a> · <a href="https://arxiv.org/abs/2009.14794">Performer</a></div></dd>
   <dt id="g-flash">FlashAttention</dt>
-  <dd>Computes exact attention (still O(T²) maths) but tiles the work in fast on-chip memory, avoiding the slow read/write of the full T×T matrix → much faster, less memory.
-    <div class="refs">Ref: <a href="https://arxiv.org/abs/2205.14135">Dao et al. 2022</a></div></dd>
-
+  <dd>Exact attention computed in fast on-chip memory tiles → much faster, less memory (same O(T²) maths).
+    <div class="refs"><a href="https://arxiv.org/abs/2205.14135">Dao et al. 2022</a></div></dd>
   <dt id="g-kvcache">KV cache</dt>
-  <dd>During generation, cache past tokens' keys/values so each new token costs O(T) instead of recomputing everything. Why chatbots stream quickly.</dd>
-
+  <dd>Cache past keys/values during generation so each new token costs O(T), not O(T²) redone.</dd>
+  <dt id="g-ffn">Feed-forward network (MLP)</dt>
+  <dd>Per-token two-layer network (usually 4× wider) after attention; lets each token process gathered info.</dd>
+  <dt id="g-residual">Residual connection</dt>
+  <dd><code>x + f(x)</code>: adds a layer's output back to its input so gradients flow through deep stacks.
+    <div class="refs"><a href="https://arxiv.org/abs/1512.03385">He et al. 2015 (ResNet)</a></div></dd>
+  <dt id="g-layernorm">LayerNorm</dt>
+  <dd>Normalizes each token vector to mean 0 / variance 1 (then scales) to stabilize training.
+    <div class="refs"><a href="https://arxiv.org/abs/1607.06450">Ba et al. 2016</a></div></dd>
 </dl>
 
-<!-- ===================================================================== -->
-<h2 id="learn-more">6. Best places to learn this (curated)</h2>
+<!-- ============================ LEARN MORE ============================ -->
+<h2 id="learn-more">11. Best places to learn this</h2>
 <ul>
-  <li><a href="https://www.youtube.com/watch?v=kCc8FmEb1nY">Andrej Karpathy — "Let's build GPT: from scratch, in code, spelled out"</a> (the canonical walkthrough; our <a href="#code">train.py</a> follows it).</li>
-  <li><a href="https://github.com/karpathy/nanoGPT">karpathy/nanoGPT</a> — the minimal reference implementation.</li>
-  <li><a href="https://karpathy.ai/zero-to-hero.html">Neural Networks: Zero to Hero</a> — backprop &amp; foundations from the ground up.</li>
-  <li><a href="https://jalammar.github.io/illustrated-transformer/">The Illustrated Transformer</a> — visual intuition for attention.</li>
-  <li><a href="https://arxiv.org/abs/1706.03762">"Attention Is All You Need"</a> — the original transformer paper.</li>
-  <li><a href="https://github.com/FareedKhan-dev/train-llm-from-scratch">FareedKhan-dev/train-llm-from-scratch</a> — our "phase 2" production reference (data pipelines, post-training: SFT/DPO/PPO/GRPO).</li>
+  <li><a href="https://www.youtube.com/watch?v=kCc8FmEb1nY">Karpathy — "Let's build GPT from scratch"</a> (our <a href="#code">train.py</a> follows it).</li>
+  <li><a href="https://github.com/karpathy/nanoGPT">karpathy/nanoGPT</a> — minimal reference implementation.</li>
+  <li><a href="https://jalammar.github.io/illustrated-transformer/">The Illustrated Transformer</a> — visual intuition.</li>
+  <li><a href="https://arxiv.org/abs/1706.03762">"Attention Is All You Need"</a> — the original paper.</li>
+  <li><a href="https://github.com/FareedKhan-dev/train-llm-from-scratch">FareedKhan-dev/train-llm-from-scratch</a> — "phase 2" production reference (data pipelines, SFT/DPO/PPO/GRPO).</li>
 </ul>
 
-<!-- ===================================================================== -->
-<h2 id="code">7. The code (runnable)</h2>
-<p>Two files live next to this page: <code>get_data.py</code> (creates <code>input.txt</code>) and <code>train.py</code> (the model). Run:</p>
+<!-- ============================ CODE ============================ -->
+<h2 id="code">12. The code (runnable)</h2>
+<p>Files next to this page: <code>get_data.py</code> (creates <code>input.txt</code>) and <code>train.py</code>. Run:</p>
 <pre class="code">cd gpt_tutorial
-pip install torch          # CPU build is fine
-python get_data.py        # downloads tiny Shakespeare (offline fallback included)
-python train.py           # trains, prints loss, then generates a sample</pre>
-<p class="note">What to watch: the printed initial loss should be ≈ <code>log(|V|)</code> (≈ 4.17 for ~65 chars). It should fall steadily, and the generated text should drift from gibberish toward Shakespeare-ish English. That progression <em>is</em> the lesson.</p>
+pip install torch
+python get_data.py
+python train.py</pre>
+<p class="note">Watch the initial loss start near <code>log(|V|)</code> (≈4.17 for ~65 chars), fall steadily, and the samples drift from gibberish toward Shakespeare-ish English.</p>
 
-<h3>train.py</h3>
-<pre class="code" id="train-src">import os
-import torch
-import torch.nn as nn
+<h3>train.py (core)</h3>
+<pre class="code">import torch, torch.nn as nn
 from torch.nn import functional as F
 
-# ---- Hyperparameters: the "knobs" you'll experiment with ----
-batch_size = 32          # sequences processed in parallel
-block_size = 64          # context length T (max tokens of history)
-max_iters = 3000         # training steps
-eval_interval = 300
-learning_rate = 3e-4     # step size eta
-eval_iters = 100
-n_embd = 128             # embedding dim d (model width)
-n_head = 4               # attention heads
-n_layer = 4              # stacked transformer blocks
-dropout = 0.1
-device = "cuda" if torch.cuda.is_available() else "cpu"
-torch.manual_seed(1337)
-
-# ---- 1. DATA + char-level tokenizer ----
-with open("input.txt", "r", encoding="utf-8") as f:
-    text = f.read()
-chars = sorted(set(text))
-vocab_size = len(chars)
-stoi = {c: i for i, c in enumerate(chars)}
-itos = {i: c for i, c in enumerate(chars)}
-encode = lambda s: [stoi[c] for c in s]
-decode = lambda l: "".join(itos[i] for i in l)
-data = torch.tensor(encode(text), dtype=torch.long)
-n = int(0.9 * len(data))
-train_data, val_data = data[:n], data[n:]
-
-def get_batch(split):
-    d = train_data if split == "train" else val_data
-    ix = torch.randint(len(d) - block_size, (batch_size,))
-    x = torch.stack([d[i:i + block_size] for i in ix])
-    y = torch.stack([d[i + 1:i + 1 + block_size] for i in ix])  # targets = x shifted by 1
-    return x.to(device), y.to(device)
-
-# ---- 2. MODEL ----
-class Head(nn.Module):
-    """One head: softmax(Q.Kt / sqrt(d)) . V with a causal mask."""
+class Head(nn.Module):                       # one attention head
     def __init__(self, head_size):
         super().__init__()
         self.key = nn.Linear(n_embd, head_size, bias=False)
         self.query = nn.Linear(n_embd, head_size, bias=False)
         self.value = nn.Linear(n_embd, head_size, bias=False)
         self.register_buffer("tril", torch.tril(torch.ones(block_size, block_size)))
-        self.dropout = nn.Dropout(dropout)
     def forward(self, x):
         B, T, C = x.shape
-        k = self.key(x); q = self.query(x)
-        wei = q @ k.transpose(-2, -1) * k.shape[-1] ** -0.5    # scaled scores (B,T,T)
+        k, q = self.key(x), self.query(x)
+        wei = q @ k.transpose(-2, -1) * k.shape[-1] ** -0.5     # Q.Kt / sqrt(d)
         wei = wei.masked_fill(self.tril[:T, :T] == 0, float("-inf"))  # causal mask
-        wei = F.softmax(wei, dim=-1)
-        wei = self.dropout(wei)
-        return wei @ self.value(x)                              # weighted sum of values
+        wei = F.softmax(wei, dim=-1)                            # weights sum to 1
+        return wei @ self.value(x)                             # weighted sum of V
 
-class MultiHeadAttention(nn.Module):
-    def __init__(self, num_heads, head_size):
-        super().__init__()
-        self.heads = nn.ModuleList([Head(head_size) for _ in range(num_heads)])
-        self.proj = nn.Linear(n_embd, n_embd)
-        self.dropout = nn.Dropout(dropout)
-    def forward(self, x):
-        out = torch.cat([h(x) for h in self.heads], dim=-1)
-        return self.dropout(self.proj(out))
-
-class FeedForward(nn.Module):
-    def __init__(self, n_embd):
-        super().__init__()
-        self.net = nn.Sequential(
-            nn.Linear(n_embd, 4 * n_embd), nn.ReLU(),
-            nn.Linear(4 * n_embd, n_embd), nn.Dropout(dropout))
-    def forward(self, x):
-        return self.net(x)
-
-class Block(nn.Module):
+class Block(nn.Module):                       # one transformer block
     def __init__(self, n_embd, n_head):
         super().__init__()
         head_size = n_embd // n_head
-        self.sa = MultiHeadAttention(n_head, head_size)
-        self.ffwd = FeedForward(n_embd)
-        self.ln1 = nn.LayerNorm(n_embd)
-        self.ln2 = nn.LayerNorm(n_embd)
+        self.sa  = MultiHeadAttention(n_head, head_size)
+        self.ff  = FeedForward(n_embd)
+        self.ln1 = nn.LayerNorm(n_embd); self.ln2 = nn.LayerNorm(n_embd)
     def forward(self, x):
-        x = x + self.sa(self.ln1(x))     # residual around attention
-        x = x + self.ffwd(self.ln2(x))   # residual around feed-forward
-        return x
-
-class GPT(nn.Module):
-    def __init__(self):
-        super().__init__()
-        self.token_embedding_table = nn.Embedding(vocab_size, n_embd)
-        self.position_embedding_table = nn.Embedding(block_size, n_embd)
-        self.blocks = nn.Sequential(*[Block(n_embd, n_head) for _ in range(n_layer)])
-        self.ln_f = nn.LayerNorm(n_embd)
-        self.lm_head = nn.Linear(n_embd, vocab_size)
-    def forward(self, idx, targets=None):
-        B, T = idx.shape
-        tok_emb = self.token_embedding_table(idx)
-        pos_emb = self.position_embedding_table(torch.arange(T, device=device))
-        x = self.ln_f(self.blocks(tok_emb + pos_emb))
-        logits = self.lm_head(x)
-        loss = None
-        if targets is not None:
-            B, T, C = logits.shape
-            loss = F.cross_entropy(logits.view(B * T, C), targets.view(B * T))
-        return logits, loss
-    @torch.no_grad()
-    def generate(self, idx, max_new_tokens):
-        for _ in range(max_new_tokens):
-            logits, _ = self(idx[:, -block_size:])
-            probs = F.softmax(logits[:, -1, :], dim=-1)
-            idx_next = torch.multinomial(probs, num_samples=1)
-            idx = torch.cat((idx, idx_next), dim=1)
-        return idx
-
-# ---- 3. TRAIN ----
-model = GPT().to(device)
-optimizer = torch.optim.AdamW(model.parameters(), lr=learning_rate)
-for it in range(max_iters):
-    xb, yb = get_batch("train")
-    logits, loss = model(xb, yb)
-    optimizer.zero_grad(set_to_none=True)
-    loss.backward()
-    optimizer.step()
-
-# ---- 4. GENERATE ----
-context = torch.zeros((1, 1), dtype=torch.long, device=device)
-print(decode(model.generate(context, max_new_tokens=500)[0].tolist()))</pre>
-<p class="back">(The version in <code>train.py</code> also prints periodic train/val loss and the expected initial loss; the snippet above is trimmed for readability.)</p>
+        x = x + self.sa(self.ln1(x))          # residual around attention
+        x = x + self.ff(self.ln2(x))          # residual around feed-forward
+        return x</pre>
+<p class="back">Full source (tokenizer, batching, model, training loop, generation) is in <code>gpt_tutorial/train.py</code>.</p>
 
 <footer>
-  Day 1 of "Train an LLM from scratch." Built as a learning companion — concepts, maths, and a runnable tiny GPT.
-  Architecture &amp; code adapted from <a href="https://github.com/karpathy/nanoGPT">nanoGPT</a> (MIT).
-  <div class="back" style="margin-top:8px">Generated 2026-06-21.</div>
+  Day 1 of "Train an LLM from scratch" — visual edition. Architecture &amp; code adapted from
+  <a href="https://github.com/karpathy/nanoGPT">nanoGPT</a> (MIT). Diagrams are hand-authored inline SVG (offline-friendly). Generated 2026-06-21.
 </footer>
 
 </div>
