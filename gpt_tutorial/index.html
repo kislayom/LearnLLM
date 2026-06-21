@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Train an LLM from Scratch — Course Home</title>
+<style>
+  :root{
+    --bg:#0f1117; --panel:#171a23; --panel2:#1d212c; --text:#e6e9ef;
+    --muted:#9aa3b2; --accent:#7cc4ff; --accent2:#ffd479; --line:#2a2f3a;
+    --good:#7ee787; --code:#0b0d13;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--text);
+    font:16px/1.65 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;}
+  .wrap{max-width:1040px;margin:0 auto;padding:40px 20px 96px;}
+  h1{font-size:34px;margin:0 0 8px;}
+  .lede{color:var(--muted);font-size:17px;margin:0 0 6px;max-width:70ch;}
+  h2{margin:42px 0 12px;font-size:21px;border-bottom:1px solid var(--line);padding-bottom:8px;}
+  p{margin:10px 0;}
+  a{color:var(--accent);text-decoration:none;}
+  a:hover{text-decoration:underline;}
+  code{background:var(--code);padding:1px 6px;border-radius:5px;font-family:"SF Mono",ui-monospace,Menlo,Consolas,monospace;font-size:13.5px;color:#cfe;}
+  pre.code{background:var(--code);border:1px solid var(--line);border-radius:10px;padding:16px;overflow-x:auto;
+    font-size:13px;line-height:1.55;font-family:"SF Mono",ui-monospace,Menlo,Consolas,monospace;color:#d6e2f0;}
+  table{width:100%;border-collapse:collapse;margin:12px 0;background:var(--panel);border:1px solid var(--line);border-radius:10px;overflow:hidden;}
+  th,td{text-align:left;padding:10px 13px;border-bottom:1px solid var(--line);vertical-align:top;}
+  th{background:var(--panel2);color:var(--accent);font-size:13px;text-transform:uppercase;letter-spacing:.04em;}
+  tr:last-child td{border-bottom:none;}
+  .pill{display:inline-block;background:#23314a;color:#bcd;border-radius:20px;padding:3px 12px;font-size:13px;margin:2px 6px 2px 0;}
+  ul{margin:8px 0;padding-left:22px;} li{margin:5px 0;}
+  footer{margin-top:60px;color:var(--muted);font-size:13px;border-top:1px solid var(--line);padding-top:16px;}
+</style>
+<link rel="stylesheet" href="assets/app.css">
+</head>
+<body data-page="home">
+<div class="wrap">
+
+  <h1>🧠 Train an LLM from Scratch</h1>
+  <p class="lede">A learn-by-building course: understand a GPT by building one — the theory, the maths, and a tiny model you can actually run. Interactive diagrams, live math widgets, and your own saved notes.</p>
+  <div>
+    <span class="pill">char-level GPT</span>
+    <span class="pill">~150 lines of PyTorch</span>
+    <span class="pill">runs on a CPU</span>
+    <span class="pill">interactive + animated</span>
+  </div>
+
+  <h2>📚 Lessons &amp; your progress</h2>
+  <p class="muted">Progress is saved in your browser as you tick off sections inside each lesson.</p>
+  <div id="dashboard"></div>
+
+  <h2>🚀 Run the model</h2>
+  <p>Everything you need is in this folder. Train a tiny GPT in a few minutes:</p>
+  <pre class="code">pip install torch              # CPU build is fine
+python get_data.py             # tiny shakespeare (or: tinystories, sherlock)
+python get_data.py --list      # see all dataset options
+python train.py                # trains, prints loss, then generates a sample</pre>
+  <p class="muted">Watch the initial loss start near <code>log(|V|)</code> (~4.17 for ~65 chars), fall steadily, and the generated text drift from gibberish toward real English.</p>
+
+  <h2>🗂️ What's in here</h2>
+  <table>
+    <thead><tr><th>File</th><th>What it is</th></tr></thead>
+    <tbody>
+      <tr><td><a href="day1.html">day1.html</a></td><td>Foundations &amp; self-attention — theory, maths, diagrams, widgets.</td></tr>
+      <tr><td><a href="day2.html">day2.html</a></td><td>The transformer block &amp; training — positions, residuals, LayerNorm, multi-head, Adam, schedules, sampling.</td></tr>
+      <tr><td><code>train.py</code></td><td>The runnable ~150-line character-level GPT.</td></tr>
+      <tr><td><code>get_data.py</code></td><td>Fetch a dataset into <code>input.txt</code>.</td></tr>
+      <tr><td><a href="DATA.md">DATA.md</a></td><td>Guide to good datasets (and bigger ones for later).</td></tr>
+      <tr><td><a href="questions.md">questions.md</a></td><td>Running log of questions &amp; answers.</td></tr>
+    </tbody>
+  </table>
+
+  <h2>🧭 How to use this</h2>
+  <ul>
+    <li><b>Read</b> Day 1 → Day 2; tick sections as you go (the bars above fill up).</li>
+    <li><b>Play</b> with the widgets — drag sliders and watch the maths react. That's where it clicks.</li>
+    <li><b>Capture questions</b> any time in the notes panel below; export them with one click.</li>
+    <li><b>Run</b> <code>train.py</code> and watch the loss fall.</li>
+  </ul>
+
+  <div id="notes"></div>
+
+  <footer>
+    Train an LLM from scratch · course home. Architecture &amp; code adapted from
+    <a href="https://github.com/karpathy/nanoGPT">nanoGPT</a> (MIT). Production reference:
+    <a href="https://github.com/FareedKhan-dev/train-llm-from-scratch">FareedKhan-dev/train-llm-from-scratch</a>.
+  </footer>
+
+</div>
+<script src="assets/app.js"></script>
+</body>
+</html>

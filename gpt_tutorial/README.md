@@ -3,6 +3,8 @@
 A learn-by-building course with **interactive** lessons and a runnable tiny GPT.
 
 ## Lessons (open in a browser)
+- **`index.html`** — course home: links the lessons, shows your saved progress
+  across days, quick-start, and the notes panel. **Start here.**
 - **`day1.html`** — Foundations & self-attention: theory, maths, 9 SVG diagrams,
   glossary with linked references, and **interactive widgets** (softmax playground,
   gradient-descent simulator, attention weights).

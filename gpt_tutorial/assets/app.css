@@ -74,3 +74,13 @@ body.anim-ready figure.animate.in-view { animation:fadeUp .6s ease forwards; }
 .gen-out{background:#0b0d13;border:1px solid #2a2f3a;border-radius:8px;padding:12px;min-height:74px;
   font-family:"SF Mono",ui-monospace,Menlo,Consolas,monospace;font-size:13px;color:#cfe;white-space:pre-wrap;margin:0}
 body.anim-ready .gen-out::after{content:'▋';color:#7cc4ff;animation:blink 1s steps(1) infinite}
+
+/* ---------------- landing dashboard ---------------- */
+#dashboard{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin:18px 0}
+@media (max-width:640px){#dashboard{grid-template-columns:1fr}}
+.day-card{display:block;background:#171a23;border:1px solid #2a2f3a;border-radius:12px;
+  padding:18px;border-bottom:1px solid #2a2f3a;transition:border-color .15s,transform .15s}
+.day-card:hover{border-color:#3a5b86;transform:translateY(-2px)}
+.day-title{font-weight:700;color:#ffd479;margin-bottom:12px}
+.dash-track{height:9px;background:#0b0d13;border:1px solid #2a2f3a;border-radius:6px;overflow:hidden}
+.dash-bar{height:100%;width:0;background:linear-gradient(90deg,#7cc4ff,#7ee787);transition:width .4s}

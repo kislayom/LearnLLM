@@ -13,6 +13,7 @@ document.addEventListener('DOMContentLoaded', () => {
   initLRSchedule();
   initSampling();
   initGenerate();
+  initDashboard();
   initAnimations();
 });
 
@@ -30,9 +31,11 @@ function softmaxArr(z){const m=Math.max(...z.filter(isFinite));const e=z.map(v=>
 
 /* ---------- progress ---------- */
 function initProgress(){
+  if(!$('#progress-wrap')) return;             // lesson pages only
   const key='gpt_progress_'+PAGE;
   const state=LS.get(key,{});
   const heads=[...document.querySelectorAll('h2')];
+  LS.set('gpt_total_'+PAGE, heads.length);     // remember total for the dashboard
   function updateBar(){
     const done=heads.filter(h=>state[h.id]).length;
     const bar=$('#progress-bar'), lbl=$('#progress-label');
@@ -273,4 +276,24 @@ function initAnimations(){
     entries.forEach(e=>{ if(e.isIntersecting){ e.target.classList.add('in-view'); io.unobserve(e.target); } });
   },{threshold:0.18});
   figs.forEach(f=>io.observe(f));
+}
+
+/* ---------- landing-page dashboard (progress across days) ---------- */
+function initDashboard(){
+  const m=$('#dashboard'); if(!m) return;
+  const days=[
+    {k:'day1', name:'Day 1 · Foundations & Attention', href:'day1.html'},
+    {k:'day2', name:'Day 2 · The Block & Training',    href:'day2.html'}
+  ];
+  m.innerHTML = days.map(d=>{
+    const total=LS.get('gpt_total_'+d.k,0);
+    const done=Object.values(LS.get('gpt_progress_'+d.k,{})).filter(Boolean).length;
+    const pct=total?Math.round(done/total*100):0;
+    const status=total?`${done}/${total} sections · ${pct}%`:'not started yet';
+    return `<a class="day-card" href="${d.href}">
+      <div class="day-title">${d.name}</div>
+      <div class="dash-track"><div class="dash-bar" style="width:${pct}%"></div></div>
+      <div class="muted" style="font-size:12px;margin-top:7px">${status} →</div>
+    </a>`;
+  }).join('');
 }
