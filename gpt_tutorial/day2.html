@@ -138,7 +138,7 @@ Each sub-layer computes <code>x + f(x)</code> instead of just <code>f(x)</code>.
 <span class="formula">x = x + Attention(LayerNorm(x))
 x = x + FeedForward(LayerNorm(x))</span>
 
-<figure>
+<figure class="flowfig">
 <svg viewBox="0 0 640 200" role="img" aria-label="Residual connection gradient highway">
   <rect class="boxa" x="30" y="80" width="60" height="40" rx="7"/><text x="60" y="105" text-anchor="middle" class="mono">x</text>
   <rect class="box"  x="200" y="80" width="90" height="40" rx="7"/><text x="245" y="105" text-anchor="middle" class="mono" font-size="12">f(x)</text>
@@ -172,7 +172,7 @@ One attention head can only focus one way. <b>Multi-head</b> attention runs <cod
 <span class="formula">head_i = softmax(Q_i·K_iᵀ / √d_k) · V_i
 MultiHead = Concat(head_1, …, head_h) · W_O      (d_k = d / h)</span>
 
-<figure>
+<figure class="flowfig">
 <svg viewBox="0 0 600 250" role="img" aria-label="Multi-head attention">
   <rect class="boxa" x="250" y="200" width="100" height="34" rx="7"/><text x="300" y="222" text-anchor="middle" class="mono">x</text>
   <rect class="box" x="60"  y="110" width="100" height="40" rx="7"/><text x="110" y="134" text-anchor="middle" class="mono" font-size="11">head 1 (Q₁K₁V₁)</text>
@@ -229,6 +229,7 @@ v ← β₂·v + (1−β₂)·g²           # variance: typical magnitude of thi
     <tr><td>Top-p (nucleus)</td><td>Keep the smallest set whose probs sum to p.</td><td>Adaptive cutoff; popular default.</td></tr>
   </tbody>
 </table>
+<div class="widget" id="w-generate"></div>
 <div class="widget" id="w-sampling"></div>
 
 <!-- ============================ TRAINING LOOP ============================ -->

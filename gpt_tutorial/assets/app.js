@@ -12,6 +12,8 @@ document.addEventListener('DOMContentLoaded', () => {
   initAttention();
   initLRSchedule();
   initSampling();
+  initGenerate();
+  initAnimations();
 });
 
 const PAGE = document.body.dataset.page || 'page';
@@ -231,4 +233,44 @@ function initSampling(){
       `<div class="bar"><div class="bar-fill ${pi===0?'zero':''}" style="height:${pi*120}px"></div><div class="bar-lbl">${(pi*100).toFixed(0)}</div><div class="muted">${labels[i]}</div></div>`).join('');
   };
   m.querySelectorAll('input').forEach(i=>i.addEventListener('input',upd)); upd();
+}
+
+/* ---------- "watch it learn" typewriter (illustrative) ---------- */
+function initGenerate(){
+  const m=$('#w-generate'); if(!m) return;
+  const stages=[
+    {label:'step 0 · random weights',  text:"qx;Jp wkz!Q df? zr,Vbn h\nrlT;c oeu mxa'g kq.·Z j!"},
+    {label:'step 200 · learning letters', text:"the an wor sou and hise the\nwalong to thet wis bere mof and"},
+    {label:'step 1000 · real words',    text:"the king shall be the more to\nthe war, and the heart of his sou"},
+    {label:'step 3000 · phrases',       text:"To be the crown of England, and\nthe true heart of a noble king."}
+  ];
+  m.innerHTML=`<h4>⌛ Watch it learn <span class="muted">(illustrative)</span></h4>
+    <p class="muted">A mock of how generated text evolves during training: gibberish → letter clusters → words → phrases. This is autoregression — sampling one token, then feeding it back.</p>
+    <div class="gen-bar"><span id="gen-label" class="acc2"></span><button id="gen-play">⏸ Pause</button></div>
+    <pre id="gen-out" class="gen-out"></pre>`;
+  const out=$('#gen-out',m), lab=$('#gen-label',m), btn=$('#gen-play',m);
+  let si=0, ci=0, t=null, playing=true;
+  function step(){
+    const st=stages[si]; lab.textContent=st.label; out.textContent=st.text.slice(0,ci);
+    if(ci<=st.text.length){ ci++; t=setTimeout(step,38); }
+    else { ci=0; si=(si+1)%stages.length; t=setTimeout(step,1100); }
+  }
+  function play(){ stop(); playing=true; btn.textContent='⏸ Pause'; step(); }
+  function stop(){ playing=false; if(t) clearTimeout(t); }
+  btn.onclick=()=> playing ? (stop(), btn.textContent='▶ Play') : play();
+  play();
+}
+
+/* ---------- scroll-triggered animations (respects reduced-motion) ---------- */
+function initAnimations(){
+  const reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  if(reduce) return;                       // leave everything static
+  document.body.classList.add('anim-ready');
+  const figs=[...document.querySelectorAll('figure')];
+  figs.forEach(f=>f.classList.add('animate'));
+  if(!('IntersectionObserver' in window)){ figs.forEach(f=>f.classList.add('in-view')); return; }
+  const io=new IntersectionObserver((entries)=>{
+    entries.forEach(e=>{ if(e.isIntersecting){ e.target.classList.add('in-view'); io.unobserve(e.target); } });
+  },{threshold:0.18});
+  figs.forEach(f=>io.observe(f));
 }

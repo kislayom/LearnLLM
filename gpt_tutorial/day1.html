@@ -99,7 +99,7 @@ An LLM is a single function estimating
 Run it repeatedly — feed its own output back in — and it generates text. That feedback loop is what <a href="#g-autoregressive">autoregressive</a> means. Here is the whole pipeline we'll build:
 </p>
 
-<figure>
+<figure class="flowfig">
 <svg viewBox="0 0 720 560" role="img" aria-label="LLM pipeline flowchart">
   <!-- boxes -->
   <rect class="boxa" x="200" y="14"  width="320" height="42" rx="8"/>
@@ -147,6 +147,7 @@ Run it repeatedly — feed its own output back in — and it generates text. Tha
 </svg>
 <figcaption>Figure 1 — The full forward pass. Training compares the probabilities to the true next token; generation samples one and feeds it back.</figcaption>
 </figure>
+<div class="widget" id="w-generate"></div>
 
 <p>The rest of Day 1 zooms into each box, with the maths. Quick map of concepts:</p>
 
@@ -271,7 +272,7 @@ Computers do maths on numbers, not letters. <a href="#g-token">Tokenization</a> 
   <text x="270" y="268" text-anchor="middle" class="mut mono" font-size="11">0.5</text>
   <text x="480" y="268" text-anchor="middle" class="mut mono" font-size="11">1.0</text>
   <!-- curve -->
-  <polyline class="edge" stroke="#7ee787" points="81,44 102,92 144,139 186,167 228,187 270,203 312,215 354,225 396,235 438,243 480,250"/>
+  <polyline class="edge draw" pathLength="1" stroke="#7ee787" points="81,44 102,92 144,139 186,167 228,187 270,203 312,215 354,225 396,235 438,243 480,250"/>
   <!-- annotations -->
   <circle cx="480" cy="250" r="4" class="good" fill="#7ee787"/>
   <text x="470" y="244" text-anchor="end" class="good" font-size="12">p=1 → loss 0 (perfect)</text>
@@ -295,7 +296,7 @@ Computers do maths on numbers, not letters. <a href="#g-token">Tokenization</a> 
   <text x="285" y="288" text-anchor="middle" class="mut">parameter θ →</text>
   <text x="18" y="140" text-anchor="middle" class="mut" transform="rotate(-90 18 140)">loss L(θ)</text>
   <!-- valley curve (lower on screen = lower loss) -->
-  <polyline class="edge" points="80,60 130,139 180,195 230,229 280,240 330,229 380,195 430,139 480,60"/>
+  <polyline class="edge draw" pathLength="1" points="80,60 130,139 180,195 230,229 280,240 330,229 380,195 430,139 480,60"/>
   <!-- descending dots -->
   <circle cx="130" cy="139" r="6" fill="#ffd479"/>
   <circle cx="180" cy="195" r="6" fill="#ffd479"/>
@@ -320,7 +321,7 @@ Each token builds three vectors via learned projections: a <a href="#g-qkv">Quer
 </p>
 <span class="formula">Attention(Q, K, V) = softmax( Q·Kᵀ / √d ) · V</span>
 
-<figure>
+<figure class="flowfig">
 <svg viewBox="0 0 720 250" role="img" aria-label="Attention dataflow">
   <rect class="boxa" x="20" y="100" width="70" height="44" rx="7"/>
   <text x="55" y="127" text-anchor="middle" class="mono">x</text>
@@ -455,10 +456,10 @@ Each token builds three vectors via learned projections: a <a href="#g-qkv">Quer
   <text x="290" y="285" text-anchor="middle" class="mut">sequence length T →</text>
   <text x="22" y="140" text-anchor="middle" class="mut" transform="rotate(-90 22 140)">cost</text>
   <!-- quadratic: x=60+T*46, y=250-T^2*2 -->
-  <polyline class="edge" stroke="#ff9d7c" points="60,250 106,248 152,242 198,232 244,218 290,200 336,178 382,152 428,122 474,88 520,50"/>
+  <polyline class="edge draw" pathLength="1" stroke="#ff9d7c" points="60,250 106,248 152,242 198,232 244,218 290,200 336,178 382,152 428,122 474,88 520,50"/>
   <text x="486" y="56" class="warn" font-size="13">O(T²) attention</text>
   <!-- linear: y=250-T*5 -> at T=10 200 -->
-  <polyline class="edge" stroke="#7ee787" points="60,250 106,245 152,240 198,235 244,230 290,225 336,220 382,215 428,210 474,205 520,200"/>
+  <polyline class="edge draw" pathLength="1" stroke="#7ee787" points="60,250 106,245 152,240 198,235 244,230 290,225 336,220 382,215 428,210 474,205 520,200"/>
   <text x="430" y="198" class="good" font-size="13">O(T) linear</text>
   <!-- doubling annotation -->
   <line class="grid" x1="290" y1="200" x2="290" y2="250" stroke-dasharray="3 4"/>
