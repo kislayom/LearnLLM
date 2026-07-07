@@ -1,0 +1,19 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "anvil-agent"
+version = "0.1.0"
+description = "Mac-native, local-model-first coding agent (working name: Anvil)"
+readme = "README.md"
+requires-python = ">=3.9"
+license = { text = "MIT" }
+# Zero runtime dependencies by design: a fresh Mac's python3 is enough.
+dependencies = []
+
+[project.scripts]
+anvil = "anvil.cli:main"
+
+[tool.setuptools.packages.find]
+include = ["anvil*"]
