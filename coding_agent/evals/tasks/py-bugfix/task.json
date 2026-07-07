@@ -1,0 +1,1 @@
+{"prompt": "The function `last_n` in stats.py is buggy: last_n([1,2,3,4], 2) should return [3, 4] but doesn't. Find and fix the bug.", "check": "python3 check.py", "steps": 12}

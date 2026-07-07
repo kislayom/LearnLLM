@@ -10,6 +10,8 @@ import shutil
 import subprocess
 import sys
 
+from .edits import EditError, apply_edit, unified_diff
+
 # Output fed back to a (small-context) model is budgeted.
 MAX_TOOL_OUTPUT = 8000
 
@@ -93,6 +95,7 @@ class Tools:
             ("search", '{"pattern","path"?} -> matching lines in files'),
             ("run_shell", '{"cmd"} -> run a shell command in the project [approval]'),
             ("check_syntax", '{"path"} -> syntax-check a file (auto-detect language)'),
+            ("run_tests", '{} -> detect and run the project\'s test suite'),
             ("mac", '{"verb","arg"?} -> macOS helper; verbs: ' + ", ".join(MAC_VERBS)),
             ("ask_user", '{"question"} -> ask the user; use when unsure or for plan approval'),
         ]
@@ -137,16 +140,15 @@ class Tools:
         full = _within(self.root, path)
         with open(full, "r", encoding="utf-8") as f:
             text = f.read()
-        n = text.count(old)
-        if n == 0:
-            return ("ERROR: `old` text not found. Read the file and copy the "
-                    "exact text (including whitespace).")
-        if n > 1:
-            return f"ERROR: `old` text appears {n} times; include more context to make it unique."
+        try:
+            new_text, strategy = apply_edit(text, old, new)
+        except EditError as e:
+            return f"ERROR: {e}"
         with open(full, "w", encoding="utf-8") as f:
-            f.write(text.replace(old, new, 1))
+            f.write(new_text)
+        diff = unified_diff(path, text, new_text)
         note = self._auto_syntax(full)
-        return f"edited {path} (1 replacement)" + note
+        return f"edited {path} (match: {strategy})\n{diff}" + note
 
     def t_list_dir(self, path="."):
         full = _within(self.root, path)
@@ -238,6 +240,18 @@ class Tools:
         res = self.t_check_syntax(os.path.relpath(full, self.root))
         return "" if res.startswith(("syntax OK", "no syntax checker",
                                      "checker", "PyYAML")) else f"\n{res}"
+
+    # ---- tests ------------------------------------------------------------
+    def t_run_tests(self):
+        from . import verify
+        cmd = verify.detect(self.root)
+        if not cmd:
+            return ("no test command detected (looked for package.json, "
+                    "Cargo.toml, go.mod, Makefile, pytest/test_*.py, or a "
+                    ".anvil-test override file)")
+        ok, report = verify.run(self.root, cmd,
+                                timeout=self.shell_timeout * 5)
+        return ("PASS\n" if ok else "FAIL\n") + report
 
     # ---- mac helpers ------------------------------------------------------
     def t_mac(self, verb, arg=""):

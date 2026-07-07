@@ -11,6 +11,9 @@ TIER_HINTS = {
               "o3", "opus", "sonnet"),
 }
 
+# context budget (approx tokens) the loop keeps history under, per tier
+CONTEXT_BUDGET = {"small": 6000, "mid": 16000, "large": 48000}
+
 
 def guess_tier(model_name):
     n = (model_name or "").lower()
@@ -33,13 +36,26 @@ class AgentConfig:
     tier: str = "mid"
     on_mac: bool = field(default_factory=lambda: sys.platform == "darwin")
 
+    # context engine
+    use_repo_map: bool = True
+    repo_map_chars: int = 3000
+    context_tokens: int = 16000    # history compaction budget
+
+    # act -> verify loop
+    auto_verify: bool = True
+    max_verify_rounds: int = 2
+
+    # safety
+    git_checkpoints: bool = True
+
     @classmethod
     def for_model(cls, model_name, **overrides):
         tier = guess_tier(model_name)
-        cfg = cls(tier=tier)
+        cfg = cls(tier=tier, context_tokens=CONTEXT_BUDGET[tier])
         if tier == "small":
             cfg.max_steps = 15       # keep loops short; small models wander
             cfg.repair_attempts = 4  # ...but forgive more formatting slips
+            cfg.repo_map_chars = 1500
         for k, v in overrides.items():
             setattr(cfg, k, v)
         return cfg

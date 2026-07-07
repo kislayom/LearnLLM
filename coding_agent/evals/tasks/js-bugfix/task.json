@@ -1,0 +1,1 @@
+{"prompt": "slug.js exports a slugify function but slugify('Hello  World!') returns 'hello--world!' instead of 'hello-world'. Fix it so repeated separators collapse and punctuation is stripped.", "check": "python3 check.py", "steps": 12}

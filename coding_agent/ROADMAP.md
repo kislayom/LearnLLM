@@ -8,13 +8,16 @@
 - [x] Model capability tiers (small/mid/large) with per-tier behavior
 - [x] Offline test suite (23 tests, stdlib only)
 
-## v0.5 — make it genuinely good day-to-day
-- [ ] Repo map context (paths + signatures) instead of raw listings
-- [ ] Git integration: auto-branch per task, commit per approved change, `/undo`
-- [ ] Verify loop: detect & run the project's test command after edits, feed failures back
-- [ ] History compaction for long tasks (collapse old tool results)
+## v0.5 — the engine (✅ this commit)
+- [x] Robust edit application: exact → trailing-ws → indent-shift → fuzzy, with diff previews
+- [x] Repo map context (symbols per language, task-relevance ranked, byte-budgeted)
+- [x] Verify loop: detect & run the project's test command; feed failures back until green
+- [x] Git safety: checkpoint before first mutation, `anvil undo` (refuses user commits)
+- [x] History compaction for long tasks (collapse old tool results)
+- [x] Eval harness: 6 graded tasks in sandboxed dirs, pass-rate table per model
 - [ ] Model manager: detect Ollama/LM Studio, recommend + pull a coder model
 - [ ] Streaming output in the CLI
+- [ ] Grow evals to 25+ tasks; run nightly across 3 local models; tune prompts per tier against the numbers
 
 ## v1 — the desktop app (docs/DESKTOP.md)
 - [ ] Tauri 2 shell wrapping the core over JSON-RPC (stdio)

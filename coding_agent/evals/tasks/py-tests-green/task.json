@@ -1,0 +1,1 @@
+{"prompt": "The test suite in this project fails (run it to see). Fix the code (not the tests) until all tests pass.", "check": "python3 check.py", "steps": 16}

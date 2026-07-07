@@ -27,30 +27,54 @@ The gaps we target:
 4. **Desktop‑style, not terminal‑only.** A resident app (menu bar + window):
    drag a folder in, see the plan, watch diffs, approve with a click.
 
-## What works today (v0 core)
+## What works today (v0.5 engine)
 
-A zero‑dependency Python agent core you can run on any Mac (or Linux):
+A zero‑dependency Python agent engine you can run on any Mac (or Linux):
 
 ```bash
 cd coding_agent
 python3 -m anvil.cli --backend ollama --model qwen2.5-coder:7b
 # or any OpenAI-compatible server (LM Studio, llama.cpp, MLX, vLLM):
 python3 -m anvil.cli --backend openai --url http://localhost:1234/v1 --model local
+python3 -m anvil.cli undo        # revert the agent's last checkpoint
 ```
 
 - **Reason‑act loop** with plan‑first mode and user approval gates.
 - **Tolerant tool calling** (`anvil/parser.py`): extracts tool calls from messy
   local‑model output (fenced blocks, prose around JSON, single quotes…), and
   sends repair feedback instead of crashing.
-- **Tools:** read/write/edit files, list, search (ripgrep→grep→python fallback),
-  shell (with approval), `check_syntax` (picks the right checker per language),
-  `mac` helpers (mdfind/open/pbcopy…), `ask_user`.
+- **Robust edit application** (`anvil/edits.py`): exact → trailing‑whitespace →
+  indent‑shift → fuzzy matching, with unified‑diff previews. Imperfectly quoted
+  edits (the #1 real‑world agent failure) still land correctly.
+- **Repo map** (`anvil/repomap.py`): symbol‑level codebase overview, ranked by
+  task relevance, byte‑budgeted for small contexts.
+- **Act→verify loop** (`anvil/verify.py`): detects the project's test command
+  (npm/cargo/go/make/pytest/unittest or a `.anvil-test` override), runs it when
+  the model claims it's done, and feeds failures back until green.
+- **Git safety** (`anvil/gitops.py`): checkpoint commit before the first
+  mutation; `anvil undo` reverts it (and refuses to touch your own commits).
+- **History compaction** (`anvil/compact.py`): long tasks fit small contexts.
+- **Tools:** read/write/edit files, search (ripgrep→grep→python fallback),
+  shell (gated + blocklist), `check_syntax` (auto‑runs after every edit),
+  `run_tests`, `mac` helpers (mdfind/open/pbcopy…), `ask_user`.
 - **Backends:** Ollama native API, any OpenAI‑compatible endpoint. No pip installs.
 
-Run the tests (no dependencies needed):
+Run the tests (43, offline, no dependencies):
 
 ```bash
 python3 -m unittest discover -s coding_agent/tests -v
+```
+
+## Measure it — the eval harness
+
+"Best" is a measured claim. `evals/` runs the agent against real coding tasks
+(bugfix, feature, multi‑file refactor, shell, make‑tests‑green) in sandboxed
+temp dirs with hidden graders, and reports a pass rate you can compare across
+models and agent versions:
+
+```bash
+python3 -m evals.harness --backend ollama --model qwen2.5-coder:7b
+python3 -m evals.harness --list
 ```
 
 ## Layout

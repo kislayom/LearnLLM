@@ -1,0 +1,1 @@
+{"prompt": "Create a bash script named biggest.sh that prints the name of the largest (by bytes) regular file in the current directory. Just the filename, nothing else.", "check": "python3 check.py", "steps": 12}

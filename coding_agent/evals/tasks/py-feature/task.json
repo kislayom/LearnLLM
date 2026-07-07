@@ -1,0 +1,1 @@
+{"prompt": "wordcount.py counts words in a file. Add a `--lines` flag so `python3 wordcount.py --lines <file>` prints the number of lines instead of words. Keep the default word behavior working.", "check": "python3 check.py", "steps": 14}

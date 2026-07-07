@@ -33,6 +33,11 @@ def _on_event(kind, payload):
     elif kind == "tool_result":
         first = str(payload).splitlines()[0] if payload else ""
         print(f"{C_DIM}  {first[:120]}{C_END}")
+    elif kind == "checkpoint":
+        print(f"{C_GRN}  ✓ {payload}{C_END}")
+    elif kind == "verify":
+        first = str(payload).splitlines()[0] if payload else ""
+        print(f"{C_YEL}  ⚑ verify: {first[:110]}{C_END}")
     elif kind == "error":
         print(f"{C_RED}  ! {payload}{C_END}")
 
@@ -47,12 +52,20 @@ def main(argv=None):
     ap.add_argument("--auto", action="store_true",
                     help="auto-approve writes/shell (careful!)")
     ap.add_argument("--no-plan", action="store_true", help="skip plan-first mode")
+    ap.add_argument("--no-verify", action="store_true",
+                    help="don't auto-run the project's tests after changes")
     ap.add_argument("task", nargs="*", help="one-shot task (else interactive)")
     args = ap.parse_args(argv)
 
+    if args.task and args.task[0] == "undo":
+        from . import gitops
+        print(gitops.undo_last(os.path.realpath(args.dir)))
+        return
+
     llm = make_adapter(args.backend, args.model, args.url, args.api_key)
     cfg = AgentConfig.for_model(args.model, auto_approve=args.auto,
-                                plan_first=not args.no_plan)
+                                plan_first=not args.no_plan,
+                                auto_verify=not args.no_verify)
     tools = Tools(root=args.dir, approve=_approve,
                   shell_timeout=cfg.shell_timeout)
     agent = Agent(llm, tools, cfg, on_event=_on_event)

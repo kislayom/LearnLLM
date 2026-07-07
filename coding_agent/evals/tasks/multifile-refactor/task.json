@@ -1,0 +1,1 @@
+{"prompt": "The tax rate 0.19 is hard-coded in both billing.py and report.py. Create config.py defining TAX_RATE = 0.19 and make both files import and use it. Behavior must not change.", "check": "python3 check.py", "steps": 16}
