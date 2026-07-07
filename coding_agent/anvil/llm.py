@@ -5,6 +5,7 @@ where messages = [{"role": "system"|"user"|"assistant", "content": str}, ...]
 """
 
 import json
+import time
 import urllib.error
 import urllib.request
 
@@ -13,23 +14,39 @@ class LLMError(RuntimeError):
     pass
 
 
+RETRIES = 2          # transient-failure retries (5xx / connection reset)
+BACKOFF = 1.5        # seconds, doubled per retry — remote servers hiccup
+
+
 def _post_json(url, payload, headers=None, timeout=300):
     data = json.dumps(payload).encode("utf-8")
-    req = urllib.request.Request(url, data=data, method="POST")
-    req.add_header("Content-Type", "application/json")
-    for k, v in (headers or {}).items():
-        req.add_header(k, v)
-    try:
-        with urllib.request.urlopen(req, timeout=timeout) as r:
-            return json.loads(r.read().decode("utf-8"))
-    except urllib.error.HTTPError as e:
-        body = e.read().decode("utf-8", "replace")[:500]
-        raise LLMError(f"HTTP {e.code} from {url}: {body}") from e
-    except urllib.error.URLError as e:
-        raise LLMError(
-            f"cannot reach {url} ({e.reason}). Is the model server running? "
-            "e.g. `ollama serve` or LM Studio's local server."
-        ) from e
+    last = None
+    for attempt in range(RETRIES + 1):
+        req = urllib.request.Request(url, data=data, method="POST")
+        req.add_header("Content-Type", "application/json")
+        for k, v in (headers or {}).items():
+            req.add_header(k, v)
+        try:
+            with urllib.request.urlopen(req, timeout=timeout) as r:
+                return json.loads(r.read().decode("utf-8"))
+        except urllib.error.HTTPError as e:
+            body = e.read().decode("utf-8", "replace")[:500]
+            if e.code >= 500 and attempt < RETRIES:
+                last = f"HTTP {e.code}"
+                time.sleep(BACKOFF * (2 ** attempt))
+                continue
+            raise LLMError(f"HTTP {e.code} from {url}: {body}") from e
+        except urllib.error.URLError as e:
+            if attempt < RETRIES:
+                last = str(e.reason)
+                time.sleep(BACKOFF * (2 ** attempt))
+                continue
+            raise LLMError(
+                f"cannot reach {url} ({e.reason}; retried {RETRIES}x). Is the "
+                "model server running? e.g. `ollama serve`, LM Studio's local "
+                "server, or your remote endpoint."
+            ) from e
+    raise LLMError(f"giving up on {url} after retries ({last})")
 
 
 class OllamaAdapter:

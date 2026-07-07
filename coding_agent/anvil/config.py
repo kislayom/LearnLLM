@@ -1,5 +1,7 @@
-"""Agent configuration and model capability tiers."""
+"""Agent configuration, model capability tiers, and endpoint profiles."""
 
+import json
+import os
 import sys
 from dataclasses import dataclass, field
 
@@ -59,3 +61,54 @@ class AgentConfig:
         for k, v in overrides.items():
             setattr(cfg, k, v)
         return cfg
+
+
+# ---------------------------------------------------------------- profiles
+# Named LLM endpoints so remote servers are first-class:
+#   ~/.anvil/config.json  and  <project>/.anvil/config.json  (project wins)
+# {
+#   "profiles": {
+#     "studio":  {"backend": "openai", "model": "qwen3-coder-32b",
+#                 "url": "http://mac-studio.local:1234/v1"},
+#     "cloud":   {"backend": "openai", "model": "some-model",
+#                 "url": "https://api.example.com/v1",
+#                 "api_key_env": "MY_API_KEY"}
+#   },
+#   "default_profile": "studio"
+# }
+# API keys are NEVER stored in the file — only the env-var name that holds one.
+
+def config_paths(root):
+    return [os.path.expanduser("~/.anvil/config.json"),
+            os.path.join(os.path.realpath(root), ".anvil", "config.json")]
+
+
+def load_profiles(root, paths=None):
+    """Returns (profiles: dict, default_name: str|None). Malformed files are
+    skipped rather than fatal — config must never brick the agent."""
+    profiles, default = {}, None
+    for p in (paths if paths is not None else config_paths(root)):
+        try:
+            with open(p, "r", encoding="utf-8") as f:
+                data = json.load(f)
+        except (OSError, json.JSONDecodeError):
+            continue
+        profiles.update(data.get("profiles") or {})
+        default = data.get("default_profile", default)
+    return profiles, default
+
+
+def resolve_profile(profile, root, paths=None):
+    """profile name -> {backend, model, url, api_key} (api_key from env)."""
+    profiles, default = load_profiles(root, paths)
+    name = profile or default
+    if not name:
+        return None
+    if name not in profiles:
+        raise ValueError(f"unknown profile '{name}'; available: "
+                         + (", ".join(sorted(profiles)) or "(none)"))
+    p = dict(profiles[name])
+    key_env = p.pop("api_key_env", None)
+    p["api_key"] = os.environ.get(key_env) if key_env else None
+    p.setdefault("backend", "openai")
+    return p

@@ -19,6 +19,14 @@
 - [ ] Streaming output in the CLI
 - [ ] Grow evals to 25+ tasks; run nightly across 3 local models; tune prompts per tier against the numbers
 
+## v0.6 — the platform layer (✅ this commit)
+- [x] Session persistence: full JSONL transcripts (tasks, replies, tool calls, edits, approvals, verify) in `.anvil/sessions/`; `anvil sessions`, `--resume`, `--no-save`
+- [x] Skills: markdown packs (global `~/.anvil/skills/` + project `.anvil/skills/`), prompt listing, `skill` tool, `/skill` command
+- [x] `ANVIL.md` project instructions injected into the system prompt (CLAUDE.md-style)
+- [x] Remote LLM endpoints: named profiles in `.anvil/config.json` (`--profile`, `default_profile`, `api_key_env`), retry/backoff on transient failures
+- [x] Self-improvement: `anvil improve` mines transcripts → dated/deduped/capped lessons in `.anvil/learned.md` → injected into future prompts; `--reflect` (model-distilled lessons), `--schedule` (nightly launchd/cron)
+- [x] REPL slash commands: `/help /skills /skill /sessions /undo /improve`
+
 ## v1 — the desktop app (docs/DESKTOP.md)
 - [ ] Tauri 2 shell wrapping the core over JSON-RPC (stdio)
 - [ ] Plan card / diff review / question sheet UI primitives

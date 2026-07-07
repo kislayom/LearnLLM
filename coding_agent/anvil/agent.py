@@ -8,8 +8,8 @@ v0.5 additions over the naive loop:
   test command runs; failures are fed back and the loop continues.
 """
 
-from . import compact, gitops, parser, repomap, verify
-from .prompts import system_prompt
+from . import compact, gitops, improve, parser, repomap, skills as skills_mod, verify
+from .prompts import project_instructions, system_prompt
 
 MUTATING = ("write_file", "edit_file", "run_shell")
 
@@ -23,32 +23,56 @@ class Agent:
     on_event : callback(kind, payload); kinds: 'assistant', 'tool_call',
                'tool_result', 'approval', 'checkpoint', 'verify',
                'final', 'error'
+    session  : anvil.session.Session for persistence (optional)
+    resume   : prior messages (from session.load_history) to continue from
     """
 
-    def __init__(self, llm, tools, config, on_event=None):
+    def __init__(self, llm, tools, config, on_event=None, session=None,
+                 resume=None):
         self.llm = llm
         self.tools = tools
         self.config = config
-        self.on_event = on_event or (lambda kind, payload: None)
+        self.session = session
+        raw_event = on_event or (lambda kind, payload: None)
+        if session is not None:
+            def logged(kind, payload, _raw=raw_event):
+                session.log_event(kind, payload)
+                _raw(kind, payload)
+            self.on_event = logged
+        else:
+            self.on_event = raw_event
+
+        skills = skills_mod.load_skills(tools.root)
+        tools.skills = skills
         self.history = [{
             "role": "system",
-            "content": system_prompt(tools, plan_first=config.plan_first,
-                                     on_mac=config.on_mac),
+            "content": system_prompt(
+                tools, plan_first=config.plan_first, on_mac=config.on_mac,
+                skills_text=skills_mod.prompt_lines(skills),
+                lessons_text=improve.learned_lessons(tools.root),
+                project_text=project_instructions(tools.root)),
         }]
+        if resume:
+            self.history.extend(resume)
         self._mutated = False
         self._checkpointed = False
         self._verify_rounds = 0
 
+    def _add(self, role, content):
+        self.history.append({"role": role, "content": content})
+        if self.session is not None:
+            self.session.log_message(role, content)
+
     # ------------------------------------------------------------------
     def run(self, task):
         """Run one task to completion; returns the final answer string."""
-        self.history.append({"role": "user", "content": self._task_msg(task)})
+        self._add("user", self._task_msg(task))
         repairs = 0
 
         for _ in range(self.config.max_steps):
             compact.compact(self.history, self.config.context_tokens)
             reply = self.llm.complete(self.history)
-            self.history.append({"role": "assistant", "content": reply})
+            self._add("assistant", reply)
             self.on_event("assistant", reply)
 
             call, err = parser.extract_tool_call(reply)
@@ -58,7 +82,7 @@ class Agent:
                 if verdict is None:                      # verified (or n/a)
                     self.on_event("final", reply)
                     return reply
-                self.history.append({"role": "user", "content": verdict})
+                self._add("user", verdict)
                 continue                                 # go fix the failures
 
             if err is not None:                          # malformed -> repair
@@ -68,17 +92,13 @@ class Agent:
                     self.on_event("error", msg)
                     return msg
                 self.on_event("error", f"repairing tool call: {err}")
-                self.history.append({"role": "user",
-                                     "content": parser.repair_hint(err)})
+                self._add("user", parser.repair_hint(err))
                 continue
 
             repairs = 0
             result = self._execute(call)
             self.on_event("tool_result", result)
-            self.history.append({
-                "role": "user",
-                "content": f"TOOL_RESULT[{call['tool']}]:\n{result}",
-            })
+            self._add("user", f"TOOL_RESULT[{call['tool']}]:\n{result}")
 
         msg = f"stopped: reached max_steps={self.config.max_steps}"
         self.on_event("error", msg)

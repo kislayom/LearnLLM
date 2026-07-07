@@ -57,9 +57,23 @@ python3 -m anvil.cli undo        # revert the agent's last checkpoint
 - **Tools:** read/write/edit files, search (ripgrep→grep→python fallback),
   shell (gated + blocklist), `check_syntax` (auto‑runs after every edit),
   `run_tests`, `mac` helpers (mdfind/open/pbcopy…), `ask_user`.
-- **Backends:** Ollama native API, any OpenAI‑compatible endpoint. No pip installs.
+- **Backends:** Ollama native API, any OpenAI‑compatible endpoint (local or
+  **remote** — LAN inference box, cloud, anything), with retry/backoff. Named
+  endpoints live in `.anvil/config.json` profiles; API keys come from env vars
+  only. No pip installs.
 
-Run the tests (43, offline, no dependencies):
+## The platform layer (Claude-Code-class features)
+
+| Feature | How it works |
+|---|---|
+| **Session persistence** | Every task, reply, tool call, edit diff, approval and verify result is appended to `.anvil/sessions/<id>.jsonl` (crash-safe JSONL). `anvil sessions` lists them; `--resume` continues the latest one with full history; `--no-save` opts out. |
+| **Skills** | Markdown instruction packs in `~/.anvil/skills/` (global) and `<project>/.anvil/skills/` (project wins). Listed one-line in the system prompt; the model loads one on demand via the `skill` tool; you can force one with `/skill <name>`. |
+| **Project instructions** | `ANVIL.md` at the project root (CLAUDE.md-style) is injected into every system prompt, budget-capped. |
+| **Remote LLM profiles** | `.anvil/config.json` → `{"profiles": {"studio": {"backend": "openai", "url": "http://mac-studio.local:1234/v1", "model": "qwen3-coder-32b", "api_key_env": "STUDIO_KEY"}}}`; use with `--profile studio` or set `default_profile`. |
+| **Self-improvement** | `anvil improve` mines all session transcripts for failure patterns (malformed tool calls, missed edits, verify failures, denials, step-limit stalls) and distills them into `.anvil/learned.md` — dated, deduped, capped, human-reviewable — which is injected into future prompts. `--reflect` adds model-written lessons from failure excerpts; `--schedule` installs a nightly launchd job (macOS) or prints a cron line. It mutates *guidance*, never its own code. |
+| **Slash commands** | `/help /skills /skill <name> /sessions /undo /improve` in the REPL. |
+
+Run the tests (58, offline, no dependencies):
 
 ```bash
 python3 -m unittest discover -s coding_agent/tests -v

@@ -51,7 +51,8 @@ def detect(root):
             return "pytest -q"
     for dirpath, dirs, files in os.walk(root):
         dirs[:] = [d for d in dirs if d not in (".git", "node_modules",
-                                                "__pycache__", ".venv")]
+                                                "__pycache__", ".venv",
+                                                ".anvil")]
         if any(f.startswith("test_") and f.endswith(".py") for f in files):
             if shutil.which("pytest"):
                 return "pytest -q"

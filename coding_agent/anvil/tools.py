@@ -78,11 +78,12 @@ MAC_VERBS = {
 
 
 class Tools:
-    def __init__(self, root=".", approve=None, shell_timeout=60):
+    def __init__(self, root=".", approve=None, shell_timeout=60, skills=None):
         """approve(description) -> bool; None means auto-deny mutations."""
         self.root = os.path.realpath(root)
         self.approve = approve
         self.shell_timeout = shell_timeout
+        self.skills = skills or {}
 
     # ---- registry ---------------------------------------------------------
     def spec(self):
@@ -98,7 +99,8 @@ class Tools:
             ("run_tests", '{} -> detect and run the project\'s test suite'),
             ("mac", '{"verb","arg"?} -> macOS helper; verbs: ' + ", ".join(MAC_VERBS)),
             ("ask_user", '{"question"} -> ask the user; use when unsure or for plan approval'),
-        ]
+        ] + ([("skill", '{"name"} -> load a skill\'s full instructions')]
+             if self.skills else [])
 
     def needs_approval(self, name, args):
         if name in ("write_file", "edit_file", "run_shell"):
@@ -155,7 +157,7 @@ class Tools:
         entries = sorted(os.listdir(full))
         out = []
         for e in entries:
-            if e in (".git", "node_modules", "__pycache__", ".venv"):
+            if e in (".git", "node_modules", "__pycache__", ".venv", ".anvil"):
                 out.append(f"{e}/ (skipped)")
                 continue
             p = os.path.join(full, e)
@@ -181,7 +183,8 @@ class Tools:
         hits = []
         for dirpath, dirs, files in os.walk(full):
             dirs[:] = [d for d in dirs if d not in (".git", "node_modules",
-                                                    "__pycache__", ".venv")]
+                                                    "__pycache__", ".venv",
+                                                    ".anvil")]
             for fn in files:
                 p = os.path.join(dirpath, fn)
                 try:
@@ -262,6 +265,14 @@ class Tools:
             return "ERROR: unknown verb. Available: " + ", ".join(MAC_VERBS)
         cmd = tmpl.replace("{q}", arg)
         return self.t_run_shell(cmd)
+
+    # ---- skills -----------------------------------------------------------
+    def t_skill(self, name):
+        s = self.skills.get(name)
+        if not s:
+            return ("ERROR: unknown skill '" + str(name) + "'. Available: "
+                    + (", ".join(sorted(self.skills)) or "(none)"))
+        return f"SKILL[{s['name']}] — follow these instructions:\n{s['body']}"
 
     # ---- user channel ------------------------------------------------------
     def t_ask_user(self, question):

@@ -17,7 +17,7 @@ v2; the interface stays the same.)
 import os
 import re
 
-SKIP_DIRS = {".git", "node_modules", "__pycache__", ".venv", "venv", "dist",
+SKIP_DIRS = {".git", ".anvil", "node_modules", "__pycache__", ".venv", "venv", "dist",
              "build", "target", ".next", ".cache", "vendor", ".tox", "eggs"}
 
 CODE_EXTS = {
